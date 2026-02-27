@@ -39,21 +39,31 @@ export async function getStockQuote(ticker: string): Promise<StockQuote> {
   const cached = cacheGet<StockQuote>(cacheKey);
   if (cached) return cached;
 
-  // /v7/finance/quote is the definitive source — same data Yahoo's own site uses
-  // quoteSummary is optional enrichment (often 403s from server IPs)
-  const [quoteRes, summary] = await Promise.all([
+  // Try v7/quote first (most accurate), fall back to v8/chart (more permissive from server IPs)
+  // Both are used yfFetchSafe so a 403 returns null instead of throwing
+  const [quoteRes, chartRes, summary] = await Promise.all([
     yfFetchSafe<AnyJson>(
       `${YF}/v7/finance/quote?symbols=${ticker}&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketPreviousClose,regularMarketVolume,averageDailyVolume10Day,marketCap,fiftyTwoWeekHigh,fiftyTwoWeekLow,longName,shortName,fullExchangeName,currency,financialCurrency,sector`
+    ),
+    yfFetchSafe<AnyJson>(
+      // range=1d so chartPreviousClose = yesterday (accurate change calc)
+      `${YF}/v8/finance/chart/${ticker}?interval=1d&range=1d&includePrePost=false`
     ),
     yfFetchSafe<AnyJson>(
       `${YF}/v10/finance/quoteSummary/${ticker}?modules=assetProfile`
     ),
   ]);
 
-  const q: AnyJson =
-    quoteRes?.quoteResponse?.result?.[0] ?? {};
+  // v7/quote result
+  const q: AnyJson = quoteRes?.quoteResponse?.result?.[0] ?? {};
 
-  if (!q.regularMarketPrice) {
+  // v8/chart meta as fallback
+  const meta: AnyJson = chartRes?.chart?.result?.[0]?.meta ?? {};
+
+  // Merge: prefer v7 fields, fall back to chart meta
+  const price: number = q.regularMarketPrice ?? meta.regularMarketPrice ?? 0;
+
+  if (!price) {
     // Fall back to Avanza for Swedish tickers
     if (isSwedishTicker(ticker)) {
       const orderbookId = await resolveOrderbookId(ticker);
@@ -71,22 +81,40 @@ export async function getStockQuote(ticker: string): Promise<StockQuote> {
   const asset: AnyJson =
     summary?.quoteSummary?.result?.[0]?.assetProfile ?? {};
 
+  // For change/changePercent: v7 is accurate; chart fallback uses range=1d so
+  // chartPreviousClose = yesterday's close (correct, unlike range=5d which was 5 days ago)
+  const prev: number =
+    q.regularMarketPreviousClose ??
+    meta.regularMarketPreviousClose ??
+    meta.chartPreviousClose ??
+    price;
+  const change: number =
+    q.regularMarketChange ??
+    (meta.regularMarketChange != null ? meta.regularMarketChange : price - prev);
+  const changePct: number =
+    q.regularMarketChangePercent ??
+    (meta.regularMarketChangePercent != null
+      ? meta.regularMarketChangePercent
+      : prev
+      ? ((price - prev) / prev) * 100
+      : 0);
+
   const result: StockQuote = {
     ticker,
-    name: q.longName ?? q.shortName ?? ticker,
-    price: q.regularMarketPrice,
-    previousClose: q.regularMarketPreviousClose ?? q.regularMarketPrice,
-    change: q.regularMarketChange ?? 0,
-    changePercent: q.regularMarketChangePercent ?? 0,
-    volume: q.regularMarketVolume ?? 0,
+    name: q.longName ?? q.shortName ?? meta.longName ?? meta.shortName ?? ticker,
+    price,
+    previousClose: prev,
+    change,
+    changePercent: changePct,
+    volume: q.regularMarketVolume ?? meta.regularMarketVolume ?? 0,
     avgVolume: q.averageDailyVolume10Day ?? 0,
     marketCap: q.marketCap ?? 0,
     high52w: q.fiftyTwoWeekHigh ?? 0,
     low52w: q.fiftyTwoWeekLow ?? 0,
     sector: asset.sector ?? q.sector ?? "Unknown",
-    exchange: q.fullExchangeName ?? "NASDAQ",
-    currency: q.financialCurrency ?? q.currency ?? "USD",
-    timestamp: (q.regularMarketTime ?? Math.floor(Date.now() / 1000)) * 1000,
+    exchange: q.fullExchangeName ?? meta.exchangeName ?? "NASDAQ",
+    currency: q.financialCurrency ?? q.currency ?? meta.currency ?? "USD",
+    timestamp: (q.regularMarketTime ?? meta.regularMarketTime ?? Math.floor(Date.now() / 1000)) * 1000,
   };
 
   // Enrich Swedish tickers via Avanza if company name is missing
