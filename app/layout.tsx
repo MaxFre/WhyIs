@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   description:
     "Real-time AI-powered explanations for daily stock price movements. Find out why any stock is up or down today.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL ?? "https://whyis.finance"
+    process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.whyisstock.com"
   ),
   openGraph: {
     siteName: "WhyIs",
@@ -42,11 +42,6 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <head>
         <meta name="google-adsense-account" content="ca-pub-3379757990050247" />
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3379757990050247"
-          crossOrigin="anonymous"
-        />
       </head>
       <body>
         <Header />
@@ -76,6 +71,9 @@ function Header() {
           </a>
           <a href="/markets" className="hover:text-white transition-colors">
             Markets
+          </a>
+          <a href="/about" className="hover:text-white transition-colors">
+            About
           </a>
         </nav>
       </div>

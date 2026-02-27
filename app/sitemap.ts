@@ -10,7 +10,7 @@ const TOP_TICKERS = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://whyis.finance";
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.whyisstock.com";
   const now = new Date();
 
   const stockEntries: MetadataRoute.Sitemap = TOP_TICKERS.map((ticker) => ({
