@@ -17,7 +17,6 @@ async function yfFetch<T>(url: string, revalidate = 60): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyJson = Record<string, any>;
 
 export async function getStockQuote(ticker: string): Promise<StockQuote> {
