@@ -39,17 +39,22 @@ export async function getStockQuote(ticker: string): Promise<StockQuote> {
   const cached = cacheGet<StockQuote>(cacheKey);
   if (cached) return cached;
 
-  // chart is primary — may include longName, shortName, sector in newer responses
-  // quoteSummary is optional (Yahoo often 403s from server IPs)
-  const [chart, summary] = await Promise.all([
-    yfFetch<AnyJson>(`${YF}/v8/finance/chart/${ticker}?interval=1d&range=5d&includePrePost=false`),
-    yfFetchSafe<AnyJson>(`${YF}/v10/finance/quoteSummary/${ticker}?modules=assetProfile,summaryDetail,price`),
+  // /v7/finance/quote is the definitive source — same data Yahoo's own site uses
+  // quoteSummary is optional enrichment (often 403s from server IPs)
+  const [quoteRes, summary] = await Promise.all([
+    yfFetchSafe<AnyJson>(
+      `${YF}/v7/finance/quote?symbols=${ticker}&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketPreviousClose,regularMarketVolume,averageDailyVolume10Day,marketCap,fiftyTwoWeekHigh,fiftyTwoWeekLow,longName,shortName,fullExchangeName,currency,financialCurrency,sector`
+    ),
+    yfFetchSafe<AnyJson>(
+      `${YF}/v10/finance/quoteSummary/${ticker}?modules=assetProfile`
+    ),
   ]);
 
-  const meta: AnyJson = chart?.chart?.result?.[0]?.meta ?? {};
+  const q: AnyJson =
+    quoteRes?.quoteResponse?.result?.[0] ?? {};
 
-  // If Yahoo returned no price, fall back to Avanza for Swedish tickers
-  if (!meta.regularMarketPrice) {
+  if (!q.regularMarketPrice) {
+    // Fall back to Avanza for Swedish tickers
     if (isSwedishTicker(ticker)) {
       const orderbookId = await resolveOrderbookId(ticker);
       if (orderbookId) {
@@ -63,42 +68,25 @@ export async function getStockQuote(ticker: string): Promise<StockQuote> {
     throw new Error(`No quote data found for ticker "${ticker}"`);
   }
 
-  // quoteSummary optional enrichment
-  const qsResult: AnyJson = summary?.quoteSummary?.result?.[0] ?? {};
-  const asset: AnyJson = qsResult.assetProfile ?? {};
-  const detail: AnyJson = qsResult.summaryDetail ?? {};
-  const priceModule: AnyJson = qsResult.price ?? {};
-
-  const price: number = meta.regularMarketPrice;
-  // Use Yahoo's official change fields — do NOT recompute from chartPreviousClose
-  // (chartPreviousClose on a 5d chart is 5 days ago, not yesterday)
-  const prev: number =
-    meta.regularMarketPreviousClose ??
-    meta.chartPreviousClose ??
-    meta.previousClose ??
-    price;
-  const change: number =
-    meta.regularMarketChange ?? price - prev;
-  const changePct: number =
-    meta.regularMarketChangePercent ?? (prev ? ((price - prev) / prev) * 100 : 0);
+  const asset: AnyJson =
+    summary?.quoteSummary?.result?.[0]?.assetProfile ?? {};
 
   const result: StockQuote = {
     ticker,
-    name: priceModule.longName ?? meta.longName ?? meta.shortName ?? ticker,
-    price,
-    previousClose: prev,
-    change,
-    changePercent: changePct,
-    volume: meta.regularMarketVolume ?? priceModule.regularMarketVolume?.raw ?? 0,
-    avgVolume:
-      detail.averageVolume?.raw ?? priceModule.averageDailyVolume10Day?.raw ?? 0,
-    marketCap: detail.marketCap?.raw ?? priceModule.marketCap?.raw ?? 0,
-    high52w: detail.fiftyTwoWeekHigh?.raw ?? 0,
-    low52w: detail.fiftyTwoWeekLow?.raw ?? 0,
-    sector: asset.sector ?? priceModule.sector ?? "Unknown",
-    exchange: meta.exchangeName ?? priceModule.exchangeName ?? "NASDAQ",
-    currency: meta.currency ?? "USD",
-    timestamp: (meta.regularMarketTime ?? Math.floor(Date.now() / 1000)) * 1000,
+    name: q.longName ?? q.shortName ?? ticker,
+    price: q.regularMarketPrice,
+    previousClose: q.regularMarketPreviousClose ?? q.regularMarketPrice,
+    change: q.regularMarketChange ?? 0,
+    changePercent: q.regularMarketChangePercent ?? 0,
+    volume: q.regularMarketVolume ?? 0,
+    avgVolume: q.averageDailyVolume10Day ?? 0,
+    marketCap: q.marketCap ?? 0,
+    high52w: q.fiftyTwoWeekHigh ?? 0,
+    low52w: q.fiftyTwoWeekLow ?? 0,
+    sector: asset.sector ?? q.sector ?? "Unknown",
+    exchange: q.fullExchangeName ?? "NASDAQ",
+    currency: q.financialCurrency ?? q.currency ?? "USD",
+    timestamp: (q.regularMarketTime ?? Math.floor(Date.now() / 1000)) * 1000,
   };
 
   // Enrich Swedish tickers via Avanza if company name is missing
