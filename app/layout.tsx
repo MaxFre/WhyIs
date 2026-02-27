@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import CookieConsent from "@/components/CookieConsent";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -39,10 +40,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
+      <head>
+        {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
+          <meta name="google-adsense-account" content={process.env.NEXT_PUBLIC_ADSENSE_CLIENT} />
+        )}
+      </head>
       <body>
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />
+        <CookieConsent />
         <Analytics />
       </body>
     </html>
@@ -81,7 +88,12 @@ function Footer() {
         <strong className="text-gray-500">Not financial advice.</strong>{" "}
         Always do your own research before making investment decisions.
       </p>
-      <p className="mt-2">© {new Date().getFullYear()} WhyIs Finance</p>
+      <nav className="mt-4 flex flex-wrap justify-center gap-4 text-gray-500">
+        <a href="/about" className="hover:text-white transition-colors">About</a>
+        <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+        <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
+      </nav>
+      <p className="mt-4">&copy; {new Date().getFullYear()} WhyIs Finance</p>
     </footer>
   );
 }
