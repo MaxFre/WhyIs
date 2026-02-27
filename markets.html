@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Market Overview — WhyIs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #030712; color: #f9fafb; font-family: system-ui, sans-serif; }
+    .card { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 20px; }
+  </style>
+</head>
+<body>
+
+  <header class="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-1 font-bold text-lg">
+        <span class="text-green-400">Why</span><span class="text-white">Is</span>
+        <span class="text-xs font-normal text-gray-500 hidden sm:block ml-1">— stock movements explained</span>
+      </a>
+      <nav class="flex gap-6 text-sm text-gray-400">
+        <a href="index.html" class="hover:text-white transition-colors">Home</a>
+        <a href="markets.html" class="text-white font-medium">Markets</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-5 py-12">
+    <h1 class="text-3xl font-bold mb-1">Market Overview</h1>
+    <p id="todayDate" class="text-gray-500 text-sm mb-10"></p>
+
+    <!-- Indices -->
+    <section class="mb-10">
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-4">Major Indices</h2>
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div class="card text-center"><p class="text-gray-400 text-sm font-medium">S&P 500</p><p class="text-2xl font-bold mt-2 tabular-nums text-red-400">-0.84%</p></div>
+        <div class="card text-center"><p class="text-gray-400 text-sm font-medium">Nasdaq</p>  <p class="text-2xl font-bold mt-2 tabular-nums text-red-400">-1.42%</p></div>
+        <div class="card text-center"><p class="text-gray-400 text-sm font-medium">Dow Jones</p><p class="text-2xl font-bold mt-2 tabular-nums text-red-400">-0.51%</p></div>
+      </div>
+    </section>
+
+    <!-- Watchlist -->
+    <section>
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-4">Watchlist</h2>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <a href="stock.html?ticker=AAPL"  class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">AAPL</p> <p class="text-xs text-gray-500">Apple</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+        <a href="stock.html?ticker=NVDA"  class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">NVDA</p> <p class="text-xs text-gray-500">NVIDIA</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+        <a href="stock.html?ticker=TSLA"  class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">TSLA</p> <p class="text-xs text-gray-500">Tesla</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+        <a href="stock.html?ticker=MSFT"  class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">MSFT</p> <p class="text-xs text-gray-500">Microsoft</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+        <a href="stock.html?ticker=AMZN"  class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">AMZN</p> <p class="text-xs text-gray-500">Amazon</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+        <a href="stock.html?ticker=META"  class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">META</p> <p class="text-xs text-gray-500">Meta</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+        <a href="stock.html?ticker=GOOGL" class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">GOOGL</p><p class="text-xs text-gray-500">Alphabet</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+        <a href="stock.html?ticker=NFLX"  class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">NFLX</p> <p class="text-xs text-gray-500">Netflix</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+        <a href="stock.html?ticker=AMD"   class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">AMD</p>  <p class="text-xs text-gray-500">AMD</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+        <a href="stock.html?ticker=SPY"   class="card flex items-center justify-between hover:border-gray-600 transition-colors group cursor-pointer"><div><p class="font-semibold text-sm group-hover:text-green-400 transition-colors">SPY</p>  <p class="text-xs text-gray-500">S&P 500 ETF</p></div><span class="text-gray-500 group-hover:text-white transition-colors text-sm">→</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-gray-800 mt-20 py-10 text-center text-xs text-gray-600">
+    <p>WhyIs is for informational purposes only. <strong class="text-gray-500">Not financial advice.</strong></p>
+    <p class="mt-1">© 2026 WhyIs Finance</p>
+  </footer>
+
+  <script>
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  </script>
+</body>
+</html>

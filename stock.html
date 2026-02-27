@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock — WhyIs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #030712; color: #f9fafb; font-family: system-ui, sans-serif; }
+    .card { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 20px; }
+    .badge-up   { background: rgba(34,197,94,.12); color: #4ade80; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+    .badge-down { background: rgba(239,68,68,.12);  color: #f87171; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+    .badge-neutral { background: rgba(107,114,128,.15); color: #9ca3af; border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-1 font-bold text-lg">
+        <span class="text-green-400">Why</span><span class="text-white">Is</span>
+        <span class="text-xs font-normal text-gray-500 hidden sm:block ml-1">— stock movements explained</span>
+      </a>
+      <nav class="flex gap-6 text-sm text-gray-400">
+        <a href="index.html" class="hover:text-white transition-colors">Home</a>
+        <a href="markets.html" class="hover:text-white transition-colors">Markets</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto px-5 py-10">
+
+    <!-- Breadcrumb -->
+    <nav class="text-xs text-gray-500 mb-6">
+      <a href="index.html" class="hover:text-white transition-colors">Home</a>
+      <span class="mx-2">/</span>
+      <span id="breadcrumbTicker" class="text-gray-300">—</span>
+    </nav>
+
+    <!-- Page headline -->
+    <div class="mb-8">
+      <h1 id="pageHeadline" class="text-3xl sm:text-4xl font-extrabold leading-tight text-gray-200">
+        Loading…
+      </h1>
+      <p id="pageDate" class="text-gray-500 text-sm mt-1.5"></p>
+    </div>
+
+    <!-- Ad banner placeholder -->
+    <div class="flex items-center justify-center rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 text-xs text-gray-600 mb-6" style="height:90px">
+      Advertisement
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="grid lg:grid-cols-3 gap-6">
+
+      <!-- Main column -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Price card -->
+        <div class="card">
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <h2 id="companyName" class="text-2xl font-bold">—</h2>
+              <p id="tickerMeta" class="text-gray-500 text-sm mt-0.5">—</p>
+            </div>
+            <span id="sectorBadge" class="text-xs font-semibold px-3 py-1 rounded-full bg-gray-700 text-gray-300">—</span>
+          </div>
+          <div class="flex flex-wrap items-end gap-4">
+            <span id="priceDisplay" class="text-5xl font-extrabold tabular-nums">—</span>
+            <div class="mb-1.5">
+              <span id="changeDisplay" class="text-xl font-bold">—</span>
+              <p id="prevClose" class="text-xs text-gray-500 mt-0.5">—</p>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div><p class="text-xs text-gray-500 uppercase tracking-wide">Market Cap</p><p id="statMktCap" class="text-sm font-semibold mt-0.5">—</p></div>
+            <div><p class="text-xs text-gray-500 uppercase tracking-wide">Avg Volume</p><p id="statVol" class="text-sm font-semibold mt-0.5">—</p></div>
+            <div><p class="text-xs text-gray-500 uppercase tracking-wide">52-wk High</p><p id="stat52h" class="text-sm font-semibold mt-0.5">—</p></div>
+            <div><p class="text-xs text-gray-500 uppercase tracking-wide">52-wk Low</p> <p id="stat52l" class="text-sm font-semibold mt-0.5">—</p></div>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card !p-4">
+          <p class="text-xs text-gray-500 uppercase tracking-widest mb-3 font-semibold">Intraday Chart — 5-min intervals</p>
+          <svg id="chart" viewBox="0 0 700 180" preserveAspectRatio="none" class="w-full" style="height:180px"></svg>
+        </div>
+
+        <!-- AI Summary -->
+        <div class="card relative overflow-hidden">
+          <div id="aiAccent" class="absolute inset-x-0 top-0 h-1 rounded-t-2xl" style="background: linear-gradient(to right, #22c55e, #34d399)"></div>
+          <div class="flex items-center gap-2 mb-4 pt-1">
+            <span class="text-lg">🤖</span>
+            <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">AI Summary</span>
+          </div>
+          <h3 id="aiHeadline" class="text-xl font-bold leading-snug mb-4">—</h3>
+          <ul id="aiReasons" class="mb-5 space-y-2"></ul>
+          <p id="aiSummary" class="text-sm text-gray-400 leading-relaxed">—</p>
+          <p class="text-xs text-gray-600 mt-4">Generated by GPT-4o-mini · just now</p>
+        </div>
+
+        <!-- News -->
+        <div class="card">
+          <div class="flex items-center gap-2 mb-5">
+            <span class="text-lg">📰</span>
+            <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Recent News</span>
+          </div>
+          <ul id="newsList" class="space-y-4"></ul>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="border border-yellow-800/40 rounded-2xl px-5 py-4 text-xs leading-relaxed" style="background: rgba(120,80,0,.08); color: rgba(253,224,71,.65)">
+          <strong style="color: rgba(253,224,71,.9)">⚠️ Disclaimer:</strong>
+          The information on this page is for informational purposes only and does not constitute financial advice.
+          AI-generated summaries may be inaccurate. Always conduct your own research and consult a licensed financial
+          advisor before making any investment decisions. Past performance is not indicative of future results.
+        </div>
+
+      </div><!-- /main -->
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+
+        <!-- Market context -->
+        <div class="card">
+          <div class="flex items-center gap-2 mb-5">
+            <span class="text-lg">🌐</span>
+            <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Market Context</span>
+            <span id="mktSentiment" class="ml-auto text-sm font-semibold text-green-400">—</span>
+          </div>
+          <div id="indexGrid" class="grid grid-cols-3 gap-3 mb-4"></div>
+          <div id="sectorRow" class="flex items-center justify-between border-t border-gray-800 pt-4 hidden">
+            <p class="text-xs text-gray-500">Sector: <span id="sectorName" class="text-gray-300">—</span></p>
+            <p id="sectorPct" class="text-sm font-bold">—</p>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="card">
+          <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Search another stock</p>
+          <form onsubmit="goToStock(event)" class="flex items-center gap-2 bg-gray-800 border border-gray-700 focus-within:border-green-500 rounded-xl px-3 py-2 transition-colors">
+            <input id="sideSearch" type="text" placeholder="e.g. MSFT" autocapitalize="characters"
+              class="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-sm" />
+            <button type="submit" class="px-3 py-1 bg-green-500 hover:bg-green-400 text-black font-semibold rounded-lg text-xs transition-colors">Go</button>
+          </form>
+        </div>
+
+        <!-- Rectangle ad -->
+        <div class="flex items-center justify-center rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 text-xs text-gray-600" style="height:250px">Advertisement</div>
+
+        <!-- Broker affiliate -->
+        <div class="card border-dashed text-center py-6">
+          <p id="tradeLabel" class="font-semibold text-gray-300 mb-1">Trade this stock</p>
+          <p class="text-xs text-gray-500">Open an account with one of our broker partners.</p>
+          <a href="#" class="mt-3 inline-block px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
+            style="background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); color: #4ade80">
+            View brokers →
+          </a>
+        </div>
+
+      </div><!-- /sidebar -->
+    </div><!-- /grid -->
+  </div><!-- /container -->
+
+  <footer class="border-t border-gray-800 mt-20 py-10 text-center text-xs text-gray-600">
+    <p>WhyIs is for informational purposes only. <strong class="text-gray-500">Not financial advice.</strong></p>
+    <p class="mt-1">© 2026 WhyIs Finance</p>
+  </footer>
+
+<script>
+// ── Sentiment scorer ─────────────────────────────────────────────
+const POS_WORDS = ['beat','surge','rally','gain','rise','upgrade','buy','profit','strong','bullish','recovery','boost','record','higher'];
+const NEG_WORDS = ['miss','fall','drop','decline','down','downgrade','sell','weak','loss','warning','cut','disappointing','below','bearish','crash','layoff','lawsuit','recall'];
+function scoreSentiment(text) {
+  const t = text.toLowerCase();
+  let s = 0;
+  POS_WORDS.forEach(w => { if (t.includes(w)) s++; });
+  NEG_WORDS.forEach(w => { if (t.includes(w)) s--; });
+  return s > 0 ? 'positive' : s < 0 ? 'negative' : 'neutral';
+}
+
+// ── Yahoo Finance via local proxy (/api/* on server.js) ───────────
+const API = 'http://localhost:3000';
+
+async function fetchQuoteAndCandles(ticker) {
+  const r = await fetch(`${API}/api/quote?ticker=${ticker}`);
+  if (!r.ok) throw new Error(`Could not load data for "${ticker}". Is server.js running?`);
+  return r.json();
+}
+async function fetchNews(ticker) {
+  const r = await fetch(`${API}/api/news?ticker=${ticker}`);
+  if (!r.ok) return {};
+  return r.json();
+}
+async function fetchIndexPct(symbol) {
+  try {
+    const r = await fetch(`${API}/api/index?symbol=${encodeURIComponent(symbol)}`);
+    const d = await r.json();
+    const meta = d?.chart?.result?.[0]?.meta;
+    const prev = meta?.chartPreviousClose || meta?.previousClose || meta?.regularMarketPreviousClose;
+    const curr = meta?.regularMarketPrice;
+    if (prev && curr) return ((curr - prev) / prev) * 100;
+    return 0;
+  } catch { return 0; }
+}
+
+function fmtLarge(n) {
+  if (!n) return '—';
+  if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+  if (n >= 1e9)  return '$' + (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
+  return '$' + n.toFixed(0);
+}
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - ts*1000) / 1000);
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+// ── Fallback mock data (used when no API key or fetch fails) ──────
+const STOCKS = {
+  AAPL: {
+    name: "Apple Inc.",
+    exchange: "NASDAQ", sector: "Technology", currency: "USD",
+    price: 211.48, prevClose: 220.10, change: -8.62, changePct: -3.92,
+    mktCap: "3.18T", avgVol: "64M", high52: 237.49, low52: 164.08,
+    ai: {
+      headline: "Apple slides on weak iPhone demand warnings from suppliers",
+      reasons: [
+        "Key Asian suppliers cut orders, signalling softer iPhone demand",
+        "Broader tech selloff as Nasdaq drops 2.1% on rate fears",
+        "Analysts lower Q2 revenue estimates following supply chain checks",
+      ],
+      summary: "Apple (AAPL) is down 3.92% today, falling from $220.10 to $211.48. The move was triggered by reports from multiple Asian suppliers indicating order cuts for the iPhone 16 lineup, raising concerns about consumer demand in key markets. This comes on a day when the broader technology sector is also under pressure — the Nasdaq fell 2.1% — driven by renewed fears that the Federal Reserve may keep interest rates higher for longer. Several Wall Street analysts have since trimmed their Q2 revenue estimates. Past performance does not guarantee future results.",
+    },
+    news: [
+      { h: "Apple suppliers cut orders as iPhone demand disappoints", s: "Reuters", t: "2h ago", sent: "negative" },
+      { h: "Analysts lower Apple Q2 revenue forecasts amid supply checks", s: "Bloomberg", t: "4h ago", sent: "negative" },
+      { h: "Nasdaq falls 2% as rate fears return — Apple among top drags", s: "CNBC", t: "5h ago", sent: "negative" },
+      { h: "Apple Vision Pro sees slower-than-expected enterprise adoption", s: "The Verge", t: "6h ago", sent: "neutral" },
+      { h: "Apple shares have fallen 9% in 5 days — is it time to buy?", s: "MarketWatch", t: "7h ago", sent: "neutral" },
+    ],
+  },
+  NVDA: {
+    name: "NVIDIA Corporation",
+    exchange: "NASDAQ", sector: "Technology", currency: "USD",
+    price: 875.32, prevClose: 842.15, change: 33.17, changePct: 3.94,
+    mktCap: "2.15T", avgVol: "42M", high52: 974.00, low52: 460.30,
+    ai: {
+      headline: "NVIDIA surges after Blackwell GPU demand exceeds expectations",
+      reasons: [
+        "Data center revenue guidance raised by 18% for next quarter",
+        "Microsoft and Amazon expand Blackwell GPU orders",
+        "AI infrastructure spending accelerates across hyperscalers",
+      ],
+      summary: "NVIDIA (NVDA) is up 3.94% today, climbing from $842.15 to $875.32. The rally follows management commentary at an investor day confirming Blackwell GPU demand is running well ahead of supply. Cloud giants Microsoft and Amazon both increased orders, and NVIDIA raised its data center revenue guidance by 18%. The broader semiconductor index is also up 1.8% on the day, adding tailwind. Analyst price targets are being revised higher across the board. Past performance does not guarantee future results.",
+    },
+    news: [
+      { h: "NVIDIA raises data center guidance 18% on surging Blackwell demand", s: "Bloomberg", t: "1h ago", sent: "positive" },
+      { h: "Microsoft, Amazon expand GPU orders with NVIDIA for 2026", s: "Reuters", t: "3h ago", sent: "positive" },
+      { h: "NVIDIA investor day: CEO Jensen Huang signals record quarter ahead", s: "CNBC", t: "4h ago", sent: "positive" },
+      { h: "Chip sector rallies as AI capex accelerates — NVIDIA leads gains", s: "MarketWatch", t: "5h ago", sent: "positive" },
+      { h: "NVIDIA stock still up 120% over 12 months despite recent pullback", s: "Barron's", t: "1d ago", sent: "neutral" },
+    ],
+  },
+  TSLA: {
+    name: "Tesla, Inc.",
+    exchange: "NASDAQ", sector: "Consumer Discretionary", currency: "USD",
+    price: 248.90, prevClose: 267.45, change: -18.55, changePct: -6.94,
+    mktCap: "792B", avgVol: "112M", high52: 488.54, low52: 138.80,
+    ai: {
+      headline: "Tesla plunges after Q4 deliveries miss and margin squeeze",
+      reasons: [
+        "Q4 vehicle deliveries came in 8% below analyst consensus",
+        "Gross margins fell to 16.3%, below the expected 18%",
+        "CEO Elon Musk controversies continue to weigh on brand sentiment",
+      ],
+      summary: "Tesla (TSLA) is down 6.94% today, falling from $267.45 to $248.90. The drop follows a Q4 earnings report showing deliveries 8% below Wall Street estimates, as intensifying competition from Chinese EV makers — particularly BYD — continues to erode market share. Gross margins disappointed at 16.3% vs. the 18% expected, reflecting ongoing price cuts. CEO Elon Musk's continued political activity has also drawn negative media coverage, with some analysts flagging brand sentiment deterioration in key European markets. Past performance does not guarantee future results.",
+    },
+    news: [
+      { h: "Tesla Q4 deliveries miss estimates by 8% as China competition bites", s: "Reuters", t: "2h ago", sent: "negative" },
+      { h: "Tesla gross margins fall to 16.3%, disappointing investors", s: "Bloomberg", t: "3h ago", sent: "negative" },
+      { h: "Musk controversies weigh on Tesla brand in Europe, survey shows", s: "FT", t: "5h ago", sent: "negative" },
+      { h: "BYD outsells Tesla in Europe for third consecutive month", s: "CNBC", t: "6h ago", sent: "negative" },
+      { h: "Tesla's Cybertruck ramp slower than expected, analyst says", s: "Electrek", t: "8h ago", sent: "neutral" },
+    ],
+  },
+};
+
+// Generic fallback for unknown tickers
+function genericStock(ticker) {
+  return {
+    name: ticker + " Corp.",
+    exchange: "NASDAQ", sector: "Technology", currency: "USD",
+    price: 154.20, prevClose: 158.40, change: -4.20, changePct: -2.65,
+    mktCap: "320B", avgVol: "18M", high52: 198.50, low52: 110.00,
+    ai: {
+      headline: ticker + " declines amid broad market pressure",
+      reasons: [
+        "Broad market selloff weighing on the sector",
+        "Rising interest rates reducing growth stock valuations",
+        "No company-specific catalyst identified today",
+      ],
+      summary: ticker + " is down 2.65% today, falling from $158.40 to $154.20. No single company-specific news catalyst has been identified. The move appears to be driven primarily by broad market pressure, with the S&P 500 and Nasdaq both down on the session. The technology sector is among the hardest hit as renewed concerns about Federal Reserve policy weigh on growth stock valuations. Past performance does not guarantee future results.",
+    },
+    news: [
+      { h: "Markets fall as rate fears return — tech stocks lead decline", s: "Bloomberg", t: "2h ago", sent: "negative" },
+      { h: "Fed officials signal rates may stay higher for longer", s: "Reuters", t: "4h ago", sent: "negative" },
+      { h: "S&P 500 drops 1.5% in broad risk-off session", s: "CNBC", t: "5h ago", sent: "negative" },
+      { h: "Growth stocks under pressure as 10-yr yield climbs to 4.7%", s: "MarketWatch", t: "6h ago", sent: "neutral" },
+    ],
+  };
+}
+
+const MARKET = {
+  indices: [
+    { name: "S&P 500", pct: -0.84 },
+    { name: "Nasdaq",  pct: -1.42 },
+    { name: "Dow",     pct: -0.51 },
+  ],
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function pct(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+function fmtPrice(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+function drawChart(prices, up) {
+  const svg = document.getElementById('chart');
+  const W = 700, H = 180;
+  const color = up ? '#22c55e' : '#ef4444';
+  // Use real prices if available, otherwise simulate
+  let data = (prices && prices.length > 1) ? prices : (() => {
+    const arr = []; let v = 90; const trend = up ? 0.18 : -0.18;
+    for (let i = 0; i < 78; i++) { v += trend + (Math.random() - 0.49) * 3.5; v = Math.max(15, Math.min(165, v)); arr.push(v); }
+    return arr;
+  })();
+  const pts = data.length;
+  const minV = Math.min(...data), maxV = Math.max(...data);
+  const toX = i => (i / (pts - 1)) * W;
+  const toY = v => H - ((v - minV) / (maxV - minV + 0.01)) * (H - 20) - 5;
+  const linePoints = data.map((v, i) => `${toX(i)},${toY(v)}`).join(' ');
+  const areaPath = `M0,${H} L` + data.map((v,i) => `${toX(i)},${toY(v)}`).join(' L') + ` L${W},${H} Z`;
+  svg.innerHTML = `
+    <defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
+    </linearGradient></defs>
+    <path d="${areaPath}" fill="url(#grad)"/>
+    <polyline points="${linePoints}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>`;
+}
+
+// ── Paint all DOM elements ────────────────────────────────────────────────────
+function paintUI(stock, ticker, candlePrices) {
+  const up = stock.changePct >= 0;
+  const direction = up ? 'up' : 'down';
+  const absPct = Math.abs(stock.changePct).toFixed(2);
+  const upColor = '#4ade80', downColor = '#f87171';
+  const col = up ? upColor : downColor;
+
+  document.title = `Why Is ${stock.name} Stock ${up ? 'Up' : 'Down'} Today? | WhyIs`;
+  document.getElementById('breadcrumbTicker').textContent = ticker;
+  document.getElementById('pageDate').textContent = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('pageHeadline').innerHTML =
+    `Why is <span style="color:${col}">${stock.name}</span> stock <span style="color:${col}">${direction}</span> today?`;
+
+  document.getElementById('companyName').textContent = stock.name;
+  document.getElementById('tickerMeta').textContent = `${ticker} · ${stock.exchange} · ${stock.currency}`;
+  document.getElementById('sectorBadge').textContent = stock.sector;
+  document.getElementById('priceDisplay').textContent = fmtPrice(stock.price);
+  document.getElementById('changeDisplay').innerHTML =
+    `<span style="color:${col}">${up ? '▲' : '▼'} $${Math.abs(stock.change).toFixed(2)} (${absPct}%)</span>`;
+  document.getElementById('prevClose').textContent = `vs. prev. close ${fmtPrice(stock.prevClose)}`;
+  document.getElementById('statMktCap').textContent = stock.mktCap;
+  document.getElementById('statVol').textContent = stock.avgVol;
+  document.getElementById('stat52h').textContent = typeof stock.high52 === 'number' && stock.high52 ? fmtPrice(stock.high52) : '—';
+  document.getElementById('stat52l').textContent = typeof stock.low52  === 'number' && stock.low52  ? fmtPrice(stock.low52)  : '—';
+
+  drawChart(candlePrices, up);
+
+  document.getElementById('aiAccent').style.background =
+    up ? 'linear-gradient(to right,#22c55e,#34d399)' : 'linear-gradient(to right,#ef4444,#f87171)';
+  document.getElementById('aiHeadline').textContent = stock.ai.headline;
+  document.getElementById('aiSummary').textContent = stock.ai.summary;
+  document.getElementById('aiReasons').innerHTML = stock.ai.reasons.map(r =>
+    `<li class="flex gap-2 text-sm text-gray-300"><span style="color:#4ade80;margin-top:2px;flex-shrink:0">•</span><span>${r}</span></li>`
+  ).join('');
+
+  const sentClass = { positive: 'badge-up', negative: 'badge-down', neutral: 'badge-neutral' };
+  document.getElementById('newsList').innerHTML = stock.news.length
+    ? stock.news.map(n => `
+        <li><a href="${n.url || '#'}" target="_blank" rel="noopener" style="text-decoration:none">
+          <div class="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-800/50 transition-colors border border-transparent hover:border-gray-700 -mx-3">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium leading-snug text-gray-200">${n.h}</p>
+              <div class="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                <span>${n.s}</span><span>·</span><span>${n.t}</span>
+                <span class="${sentClass[n.sent] || 'badge-neutral'} ml-auto">${n.sent}</span>
+              </div>
+            </div>
+          </div>
+        </a></li>`).join('')
+    : '<li class="text-gray-500 text-sm text-center py-6">No recent news found for this ticker.</li>';
+
+  const idx = stock.indices;
+  const negC = idx.filter(i => i.pct < -0.2).length;
+  const posC = idx.filter(i => i.pct >  0.2).length;
+  const mood = negC >= 2 ? { label:'Risk-Off 📉', color:'#f87171' }
+             : posC >= 2 ? { label:'Risk-On 📈',  color:'#4ade80' }
+             :              { label:'Neutral 😐',  color:'#9ca3af' };
+  const mktEl = document.getElementById('mktSentiment');
+  mktEl.textContent = mood.label; mktEl.style.color = mood.color;
+  document.getElementById('indexGrid').innerHTML = idx.map(i =>
+    `<div style="background:rgba(255,255,255,.03);border-radius:12px;padding:12px;">
+       <p class="text-xs text-gray-500 font-medium">${i.name}</p>
+       <p class="text-sm font-bold mt-1 tabular-nums" style="color:${i.pct>=0?'#4ade80':'#f87171'}">${pct(i.pct)}</p>
+     </div>`).join('');
+
+  document.getElementById('tradeLabel').textContent = `Trade ${ticker}`;
+}
+
+// ── Build summary text from live data (no OpenAI needed) ──────────────────────
+function buildSummary(ticker, name, quote, news, spPct, nqPct, djPct) {
+  const up = quote.dp >= 0;
+  const absPct = Math.abs(quote.dp).toFixed(2);
+  const dir = up ? 'up' : 'down';
+  const mktCtx = (spPct < -0.5 || nqPct < -0.5) ? 'a broad market selloff'
+               : (spPct > 0.5  || nqPct > 0.5)  ? 'a positive market session'
+               : 'a mixed market session';
+  const topHeads = news.slice(0,3).map(n => n.h);
+  const negN = news.filter(n => n.sent === 'negative').length;
+  const posN = news.filter(n => n.sent === 'positive').length;
+  const newsSentence = !news.length
+    ? 'No specific news catalyst has been identified today.'
+    : negN > posN ? `Recent coverage skews negative: "${topHeads[0]}".`
+    : posN > negN ? `Recent coverage is mostly positive: "${topHeads[0]}".`
+    :               `News is mixed today: "${topHeads[0]}".`;
+
+  return {
+    headline: `${name} ${dir} ${absPct}% — ${news.length ? news[0].h.slice(0,55)+'…' : 'no major catalyst identified'}`,
+    summary: `${name} (${ticker}) is ${dir} ${absPct}% today, trading at $${quote.c.toFixed(2)} versus yesterday's close of $${quote.pc.toFixed(2)}. The move is occurring during ${mktCtx} — S&P 500 ${pct(spPct)}, Nasdaq ${pct(nqPct)}. ${newsSentence} Past performance does not guarantee future results.`,
+    reasons: [
+      ...topHeads,
+      `Broader market: S&P 500 ${pct(spPct)}, Nasdaq ${pct(nqPct)}`,
+    ],
+  };
+}
+
+// Show yellow banner when server isn't running
+function showKeyBanner(msg) {
+  const b = document.createElement('div');
+  b.style.cssText = 'background:#1c1400;border-bottom:1px solid #78350f;padding:10px 20px;text-align:center;font-size:13px;color:#fde68a;position:relative;z-index:100;';
+  b.innerHTML = msg || '⚠️ <strong>Demo mode</strong> — live data unavailable.';
+  document.body.insertBefore(b, document.body.firstChild);
+}
+
+// ── Main entry point ──────────────────────────────────────────────────────────
+async function render() {
+  const params = new URLSearchParams(window.location.search);
+  const ticker = (params.get('ticker') || 'AAPL').toUpperCase();
+
+  // Check if server.js is likely running — if not, show mock + banner
+  let serverRunning = true;
+  try {
+    const test = await Promise.race([
+      fetch(`${API}/api/quote?ticker=_TEST_`).catch(() => null),
+      new Promise(r => setTimeout(() => r(null), 2000)),
+    ]);
+    if (!test) serverRunning = false;
+  } catch { serverRunning = false; }
+
+  if (!serverRunning) {
+    showKeyBanner('⚠️ Server not running — showing demo data. Run <code style="background:#292524;padding:1px 5px;border-radius:4px">node server.js</code> then open <a href="http://localhost:3000/stock.html?ticker=' + ticker + '" style="color:#fbbf24;text-decoration:underline">localhost:3000</a> for live data.');
+    const mock = STOCKS[ticker] || genericStock(ticker);
+    mock.indices = MARKET.indices;
+    paintUI(mock, ticker, null);
+    return;
+  }
+
+  // Loading state
+  document.getElementById('pageHeadline').textContent = `Loading ${ticker}…`;
+  document.getElementById('priceDisplay').textContent = '—';
+
+  try {
+    const [chartData, newsData, spPct, nqPct, djPct] = await Promise.all([
+      fetchQuoteAndCandles(ticker),
+      fetchNews(ticker),
+      fetchIndexPct('%5EGSPC'),
+      fetchIndexPct('%5EIXIC'),
+      fetchIndexPct('%5EDJI'),
+    ]);
+
+    const result = chartData?.chart?.result?.[0];
+    if (!result) throw new Error(`No data found for "${ticker}" — check the ticker symbol.`);
+
+    const meta = result.meta;
+    const quotes = result.indicators?.quote?.[0] || {};
+    const closes = quotes.close || [];
+    const candlePrices = closes.filter(Boolean);
+
+    const price    = meta.regularMarketPrice;
+    const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPreviousClose;
+    const change   = price - prevClose;
+    const changePct = (change / prevClose) * 100;
+
+    // News from Yahoo search
+    const rawNews = newsData?.news || [];
+    const news = rawNews.slice(0, 8).map(n => ({
+      h:    n.title || n.headline || '',
+      s:    n.publisher || n.source || '',
+      t:    n.providerPublishTime ? timeAgo(n.providerPublishTime) : '',
+      sent: scoreSentiment(n.title || ''),
+      url:  n.link || '#',
+    }));
+
+    const stock = {
+      name:      meta.longName || meta.shortName || ticker,
+      exchange:  meta.exchangeName || 'US',
+      sector:    meta.sector || '—',
+      currency:  meta.currency || 'USD',
+      price,
+      prevClose,
+      change,
+      changePct,
+      mktCap:  meta.marketCap ? fmtLarge(meta.marketCap) : '—',
+      avgVol:  meta.regularMarketVolume ? fmtLarge(meta.regularMarketVolume) : '—',
+      high52:  meta.fiftyTwoWeekHigh || 0,
+      low52:   meta.fiftyTwoWeekLow  || 0,
+      ai: buildSummary(ticker, meta.longName || ticker, { c: price, pc: prevClose, d: change, dp: changePct }, news, spPct, nqPct, djPct),
+      news,
+      indices: [
+        { name: 'S&P 500', pct: spPct },
+        { name: 'Nasdaq',  pct: nqPct },
+        { name: 'Dow',     pct: djPct },
+      ],
+    };
+
+    paintUI(stock, ticker, candlePrices);
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('pageHeadline').innerHTML = `<span style="color:#f87171">Failed to load ${ticker}</span>`;
+    document.getElementById('aiSummary').textContent = err.message || 'An error occurred fetching data.';
+  }
+}
+
+function goToStock(e) {
+  e.preventDefault();
+  const val = document.getElementById('sideSearch').value.trim().toUpperCase();
+  if (val) window.location.href = 'stock.html?ticker=' + val;
+}
+
+render();
+</script>
+</body>
+</html>
