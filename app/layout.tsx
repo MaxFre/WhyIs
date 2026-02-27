@@ -41,9 +41,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <head>
-        {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
-          <meta name="google-adsense-account" content={process.env.NEXT_PUBLIC_ADSENSE_CLIENT} />
-        )}
+        <meta name="google-adsense-account" content="ca-pub-3379757990050247" />
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3379757990050247"
+          crossOrigin="anonymous"
+        />
       </head>
       <body>
         <Header />
