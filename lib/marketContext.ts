@@ -1,43 +1,51 @@
 /**
- * Fetches major US index quotes and sector context via Finnhub.
+ * Fetches major US index quotes and sector context via Yahoo Finance.
+ * No API key required.
  */
 
 import { IndexQuote, MarketContext, SectorPerformance } from "@/types";
 import { cacheGet, cacheSet, TTL } from "./cache";
 
-const BASE = "https://finnhub.io/api/v1";
-const KEY = process.env.FINNHUB_API_KEY ?? "";
+const YF = "https://query2.finance.yahoo.com";
+const HEADERS = {
+  "User-Agent": "Mozilla/5.0 (compatible; WhyIs/1.0)",
+  "Accept": "application/json",
+};
 
+// %5E = ^ (URL-encoded)
 const INDICES = [
-  { name: "S&P 500",  symbol: "^GSPC" },
-  { name: "Nasdaq",   symbol: "^IXIC" },
-  { name: "Dow Jones", symbol: "^DJI"  },
+  { name: "S&P 500",   symbol: "%5EGSPC", displaySymbol: "^GSPC" },
+  { name: "Nasdaq",    symbol: "%5EIXIC", displaySymbol: "^IXIC" },
+  { name: "Dow Jones", symbol: "%5EDJI",  displaySymbol: "^DJI"  },
 ];
 
-// Sector ETF proxies
 const SECTOR_ETFS: Record<string, string> = {
-  "Technology":          "XLK",
-  "Health Care":         "XLV",
-  "Financials":          "XLF",
+  "Technology":             "XLK",
+  "Health Care":            "XLV",
+  "Financials":             "XLF",
   "Consumer Discretionary": "XLY",
-  "Consumer Staples":    "XLP",
-  "Industrials":         "XLI",
-  "Energy":              "XLE",
-  "Utilities":           "XLU",
-  "Real Estate":         "XLRE",
-  "Materials":           "XLB",
+  "Consumer Staples":       "XLP",
+  "Industrials":            "XLI",
+  "Energy":                 "XLE",
+  "Utilities":              "XLU",
+  "Real Estate":            "XLRE",
+  "Materials":              "XLB",
   "Communication Services": "XLC",
 };
 
-async function fetchQuoteChange(symbol: string): Promise<number> {
+async function fetchChangePercent(symbol: string): Promise<number> {
   try {
     const res = await fetch(
-      `${BASE}/quote?symbol=${symbol}&token=${KEY}`,
-      { next: { revalidate: 120 } }
+      `${YF}/v8/finance/chart/${symbol}?interval=1d&range=1d`,
+      { headers: HEADERS, next: { revalidate: 120 } }
     );
     if (!res.ok) return 0;
     const data = await res.json();
-    return data.dp ?? 0;
+    const meta = data.chart?.result?.[0]?.meta ?? {};
+    const price: number = meta.regularMarketPrice ?? 0;
+    const prev: number = meta.chartPreviousClose ?? meta.previousClose ?? price;
+    if (!prev) return 0;
+    return ((price - prev) / prev) * 100;
   } catch {
     return 0;
   }
@@ -48,27 +56,22 @@ export async function getMarketContext(sector?: string): Promise<MarketContext> 
   const cached = cacheGet<MarketContext>(cacheKey);
   if (cached) return cached;
 
-  // Fetch indices + optional sector ETF in parallel
   const sectorEtf = sector ? (SECTOR_ETFS[sector] ?? null) : null;
   const symbols = [...INDICES.map((i) => i.symbol), ...(sectorEtf ? [sectorEtf] : [])];
 
-  const changes = await Promise.all(symbols.map(fetchQuoteChange));
+  const changes = await Promise.all(symbols.map(fetchChangePercent));
 
   const indices: IndexQuote[] = INDICES.map((idx, i) => ({
     name: idx.name,
-    symbol: idx.symbol,
+    symbol: idx.displaySymbol,
     changePercent: changes[i],
   }));
 
   let sectorPerf: SectorPerformance | null = null;
   if (sector && sectorEtf) {
-    sectorPerf = {
-      sector,
-      changePercent: changes[INDICES.length],
-    };
+    sectorPerf = { sector, changePercent: changes[INDICES.length] };
   }
 
-  // Infer broad sentiment: if 2+ indices are negative → risk-off
   const negCount = indices.filter((i) => i.changePercent < -0.2).length;
   const posCount = indices.filter((i) => i.changePercent > 0.2).length;
   const marketSentiment =

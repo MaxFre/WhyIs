@@ -1,53 +1,24 @@
 /**
- * Stock data via Finnhub (primary).
- * Set FINNHUB_API_KEY in .env.local
- *
- * Finnhub free tier: 60 calls/min
+ * Stock data via Yahoo Finance (no API key required).
  */
 
 import { Candle, StockQuote } from "@/types";
 import { cacheGet, cacheSet, TTL } from "./cache";
 
-const BASE = "https://finnhub.io/api/v1";
-const KEY = process.env.FINNHUB_API_KEY ?? "";
+const YF = "https://query2.finance.yahoo.com";
+const HEADERS = {
+  "User-Agent": "Mozilla/5.0 (compatible; WhyIs/1.0)",
+  "Accept": "application/json",
+};
 
-// ─── Company profile + quote ──────────────────────────────────────────────────
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { next: { revalidate: 60 } });
-  if (!res.ok) throw new Error(`Finnhub error ${res.status}: ${url}`);
+async function yfFetch<T>(url: string, revalidate = 60): Promise<T> {
+  const res = await fetch(url, { headers: HEADERS, next: { revalidate } });
+  if (!res.ok) throw new Error(`Yahoo Finance error ${res.status}: ${url}`);
   return res.json() as Promise<T>;
 }
 
-interface FinnhubQuote {
-  c: number;   // current price
-  d: number;   // change
-  dp: number;  // percent change
-  h: number;   // high
-  l: number;   // low
-  o: number;   // open
-  pc: number;  // previous close
-  t: number;   // timestamp
-  v?: number;
-}
-
-interface FinnhubProfile {
-  name: string;
-  ticker: string;
-  exchange: string;
-  currency: string;
-  marketCapitalization: number;
-  finnhubIndustry: string;
-  logo?: string;
-}
-
-interface FinnhubMetric {
-  metric: {
-    "52WeekHigh"?: number;
-    "52WeekLow"?: number;
-    "10DayAverageTradingVolume"?: number;
-  };
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyJson = Record<string, any>;
 
 export async function getStockQuote(ticker: string): Promise<StockQuote> {
   ticker = ticker.toUpperCase();
@@ -55,48 +26,43 @@ export async function getStockQuote(ticker: string): Promise<StockQuote> {
   const cached = cacheGet<StockQuote>(cacheKey);
   if (cached) return cached;
 
-  const [quote, profile, metrics] = await Promise.all([
-    fetchJson<FinnhubQuote>(`${BASE}/quote?symbol=${ticker}&token=${KEY}`),
-    fetchJson<FinnhubProfile>(`${BASE}/stock/profile2?symbol=${ticker}&token=${KEY}`),
-    fetchJson<FinnhubMetric>(`${BASE}/stock/metric?symbol=${ticker}&metric=all&token=${KEY}`),
+  const [chart, summary] = await Promise.all([
+    yfFetch<AnyJson>(`${YF}/v8/finance/chart/${ticker}?interval=1d&range=5d`),
+    yfFetch<AnyJson>(`${YF}/v10/finance/quoteSummary/${ticker}?modules=assetProfile,summaryDetail`),
   ]);
 
-  if (!quote.c) {
+  const meta: AnyJson = chart.chart?.result?.[0]?.meta ?? {};
+  if (!meta.regularMarketPrice) {
     throw new Error(`No quote data found for ticker "${ticker}"`);
   }
 
+  const profile: AnyJson = summary.quoteSummary?.result?.[0] ?? {};
+  const asset: AnyJson = profile.assetProfile ?? {};
+  const detail: AnyJson = profile.summaryDetail ?? {};
+
+  const price: number = meta.regularMarketPrice;
+  const prev: number = meta.chartPreviousClose ?? meta.previousClose ?? price;
+
   const result: StockQuote = {
     ticker,
-    name: profile.name ?? ticker,
-    price: quote.c,
-    previousClose: quote.pc,
-    change: quote.d,
-    changePercent: quote.dp,
-    volume: 0, // Finnhub quote endpoint doesn't return volume; use candles
-    avgVolume: (metrics.metric["10DayAverageTradingVolume"] ?? 0) * 1_000_000,
-    marketCap: profile.marketCapitalization * 1_000_000,
-    high52w: metrics.metric["52WeekHigh"] ?? 0,
-    low52w: metrics.metric["52WeekLow"] ?? 0,
-    sector: profile.finnhubIndustry ?? "Unknown",
-    exchange: profile.exchange ?? "NASDAQ",
-    currency: profile.currency ?? "USD",
-    timestamp: quote.t * 1000,
+    name: meta.longName ?? meta.shortName ?? ticker,
+    price,
+    previousClose: prev,
+    change: price - prev,
+    changePercent: prev ? ((price - prev) / prev) * 100 : 0,
+    volume: meta.regularMarketVolume ?? 0,
+    avgVolume: detail.averageVolume?.raw ?? 0,
+    marketCap: detail.marketCap?.raw ?? 0,
+    high52w: detail.fiftyTwoWeekHigh?.raw ?? 0,
+    low52w: detail.fiftyTwoWeekLow?.raw ?? 0,
+    sector: asset.sector ?? "Unknown",
+    exchange: meta.exchangeName ?? "NASDAQ",
+    currency: meta.currency ?? "USD",
+    timestamp: (meta.regularMarketTime ?? Math.floor(Date.now() / 1000)) * 1000,
   };
 
   cacheSet(cacheKey, result, TTL.QUOTE);
   return result;
-}
-
-// ─── Intraday candles ─────────────────────────────────────────────────────────
-
-interface FinnhubCandles {
-  c: number[];
-  h: number[];
-  l: number[];
-  o: number[];
-  t: number[];
-  v: number[];
-  s: string;
 }
 
 export async function getIntradayCandles(ticker: string): Promise<Candle[]> {
@@ -105,23 +71,25 @@ export async function getIntradayCandles(ticker: string): Promise<Candle[]> {
   const cached = cacheGet<Candle[]>(cacheKey);
   if (cached) return cached;
 
-  const now = Math.floor(Date.now() / 1000);
-  const from = now - 86400; // last 24 h
-
-  const data = await fetchJson<FinnhubCandles>(
-    `${BASE}/stock/candle?symbol=${ticker}&resolution=5&from=${from}&to=${now}&token=${KEY}`
+  const data = await yfFetch<AnyJson>(
+    `${YF}/v8/finance/chart/${ticker}?interval=5m&range=1d`,
+    300
   );
 
-  if (data.s !== "ok" || !data.t?.length) return [];
+  const result = data.chart?.result?.[0];
+  if (!result?.timestamp) return [];
 
-  const candles: Candle[] = data.t.map((t, i) => ({
-    time: t,
-    open: data.o[i],
-    high: data.h[i],
-    low: data.l[i],
-    close: data.c[i],
-    volume: data.v[i],
-  }));
+  const q: AnyJson = result.indicators?.quote?.[0] ?? {};
+  const candles: Candle[] = (result.timestamp as number[])
+    .map((t: number, i: number) => ({
+      time: t,
+      open: q.open?.[i] ?? 0,
+      high: q.high?.[i] ?? 0,
+      low: q.low?.[i] ?? 0,
+      close: q.close?.[i] ?? 0,
+      volume: q.volume?.[i] ?? 0,
+    }))
+    .filter((c) => c.close > 0);
 
   cacheSet(cacheKey, candles, TTL.CANDLES);
   return candles;

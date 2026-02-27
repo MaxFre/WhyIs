@@ -1,27 +1,26 @@
 /**
- * News aggregation via Finnhub company-news endpoint.
- * Falls back to an empty array with a console warning.
- *
- * FINNHUB_API_KEY required.
+ * News via Yahoo Finance search — no API key required.
  */
 
 import { NewsArticle } from "@/types";
 import { cacheGet, cacheSet, TTL } from "./cache";
 import { scoreSentiment } from "./sentiment";
-import { format, subDays } from "date-fns";
 
-const BASE = "https://finnhub.io/api/v1";
-const KEY = process.env.FINNHUB_API_KEY ?? "";
+const YF = "https://query2.finance.yahoo.com";
+const HEADERS = {
+  "User-Agent": "Mozilla/5.0 (compatible; WhyIs/1.0)",
+  "Accept": "application/json",
+};
 
-interface FinnhubNews {
-  id: number;
-  headline: string;
-  summary: string;
-  url: string;
-  source: string;
-  datetime: number; // unix seconds
-  image?: string;
-  category: string;
+interface YFNewsItem {
+  uuid: string;
+  title: string;
+  publisher: string;
+  link: string;
+  providerPublishTime: number;
+  thumbnail?: {
+    resolutions?: Array<{ url: string; width: number; height: number }>;
+  };
 }
 
 export async function getTickerNews(
@@ -33,32 +32,30 @@ export async function getTickerNews(
   const cached = cacheGet<NewsArticle[]>(cacheKey);
   if (cached) return cached;
 
-  const today = format(new Date(), "yyyy-MM-dd");
-  const from = format(subDays(new Date(), 7), "yyyy-MM-dd"); // last 7 days
-
   try {
     const res = await fetch(
-      `${BASE}/company-news?symbol=${ticker}&from=${from}&to=${today}&token=${KEY}`,
-      { next: { revalidate: 600 } }
+      `${YF}/v1/finance/search?q=${ticker}&newsCount=${maxArticles}&language=en-US`,
+      { headers: HEADERS, next: { revalidate: 600 } }
     );
-
     if (!res.ok) throw new Error(`News fetch failed: ${res.status}`);
 
-    const raw: FinnhubNews[] = await res.json();
+    const data = await res.json();
+    const raw: YFNewsItem[] = data.news ?? [];
+
     const articles = raw.slice(0, maxArticles).map((item): NewsArticle => {
-      const { sentiment, score } = scoreSentiment(
-        `${item.headline} ${item.summary}`
-      );
+      const { sentiment, score } = scoreSentiment(item.title);
+      const thumbs = item.thumbnail?.resolutions ?? [];
+      const image = thumbs.sort((a, b) => b.width - a.width)[0]?.url;
       return {
-        id: String(item.id),
-        headline: item.headline,
-        summary: item.summary?.slice(0, 300) ?? "",
-        url: item.url,
-        source: item.source,
-        publishedAt: new Date(item.datetime * 1000).toISOString(),
+        id: item.uuid,
+        headline: item.title,
+        summary: "",
+        url: item.link,
+        source: item.publisher,
+        publishedAt: new Date(item.providerPublishTime * 1000).toISOString(),
         sentiment,
         sentimentScore: score,
-        image: item.image,
+        image,
       };
     });
 
