@@ -1,5 +1,6 @@
 import { NewsArticle } from "@/types";
 import { formatDistanceToNow } from "date-fns";
+import Image from "next/image";
 import clsx from "clsx";
 
 interface Props {
@@ -64,10 +65,12 @@ export default function NewsList({ articles }: Props) {
             >
               <div className="flex items-start gap-3">
                 {article.image && (
-                  <img
+                  <Image
                     src={article.image}
                     alt=""
-                    className="w-16 h-12 object-cover rounded-lg shrink-0 opacity-80"
+                    width={64}
+                    height={48}
+                    className="object-cover rounded-lg shrink-0 opacity-80"
                   />
                 )}
                 <div className="flex-1 min-w-0">

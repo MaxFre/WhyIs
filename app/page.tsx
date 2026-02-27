@@ -25,7 +25,7 @@ export default async function HomePage() {
           down today?
         </h1>
         <p className="text-gray-400 text-lg max-w-xl mx-auto">
-          Get a real-time, AI-generated explanation for any stock's daily price
+          Get a real-time, AI-generated explanation for any stock&apos;s daily price
           movement — news, market context, and a plain-English summary.
         </p>
       </div>
