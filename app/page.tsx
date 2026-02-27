@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import TickerSearch from "@/components/TickerSearch";
+import AdSenseLoader from "@/components/AdSenseLoader";
 
 export const metadata: Metadata = {
   title: "Why Is Your Stock Up or Down Today? | WhyIs",
@@ -97,6 +98,7 @@ export default async function HomePage() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
+      <AdSenseLoader />
       {/* Hero */}
       <div className="text-center mb-12 sm:mb-16">
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-snug">

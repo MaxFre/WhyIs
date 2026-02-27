@@ -2,32 +2,17 @@
 
 import { useState, useEffect } from "react";
 
-function loadAdSense() {
-  if (document.getElementById("adsense-script")) return;
-  const s = document.createElement("script");
-  s.id = "adsense-script";
-  s.async = true;
-  s.crossOrigin = "anonymous";
-  s.src =
-    "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3379757990050247";
-  document.head.appendChild(s);
-}
-
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const consent = localStorage.getItem("cookie-consent");
-    if (consent === "accepted") {
-      loadAdSense();
-    } else if (!consent) {
-      setVisible(true);
-    }
+    if (!consent) setVisible(true);
   }, []);
 
   const accept = () => {
     localStorage.setItem("cookie-consent", "accepted");
-    loadAdSense();
+    window.dispatchEvent(new Event("cookie-consent-accepted"));
     setVisible(false);
   };
 

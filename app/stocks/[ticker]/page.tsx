@@ -15,6 +15,7 @@ import MarketContextCard from "@/components/MarketContextCard";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import RefreshButton from "@/components/RefreshButton";
 import TickerSearch from "@/components/TickerSearch";
+import AdSenseLoader from "@/components/AdSenseLoader";
 
 // ISR: revalidate every 15 minutes
 export const revalidate = 900;
@@ -140,6 +141,7 @@ export default async function StockPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(block) }}
         />
       ))}
+      <AdSenseLoader />
 
       <div className="mx-auto max-w-6xl px-4 py-10">
         {/* Breadcrumb */}
