@@ -16,19 +16,17 @@ const TRENDING = [
 
 export default async function HomePage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-20 pb-32">
+    <div className="mx-auto max-w-4xl px-4 pt-12 sm:pt-20 pb-24 sm:pb-32">
       {/* Hero */}
-      <div className="text-center mb-16">
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-tight pt-10">
+      <div className="text-center mb-12 sm:mb-16">
+        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-snug">
           Why is{" "}
-          <span className="text-green-400">[stock]</span>{" "}
-          <span className="relative inline-block">
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-green-400 italic text-3xl sm:text-4xl font-extrabold whitespace-nowrap">
-              Up
-            </span>
-            <span className="text-red-400 italic">Down</span>
-          </span>{" "}
-          today?
+          <span className="text-green-400">[stock]</span>
+          <br />
+          <span className="text-green-400 italic">Up</span>
+          {" or "}
+          <span className="text-red-400 italic">Down</span>
+          {" today?"}
         </h1>
         <p className="text-gray-400 text-lg max-w-xl mx-auto">
           Search any ticker to instantly see why it&apos;s moving — AI-powered news analysis,
@@ -59,8 +57,29 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Countries covered */}
+      <section className="mt-16">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">
+          Markets covered
+        </h2>
+        <div className="flex flex-wrap gap-4">
+          {[
+            { flag: "🇺🇸", name: "United States", desc: "NYSE · NASDAQ · AMEX" },
+            { flag: "🇸🇪", name: "Sweden",        desc: "Nasdaq Stockholm · NGM" },
+          ].map(({ flag, name, desc }) => (
+            <div key={name} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-800 border border-gray-700">
+              <span className="text-3xl">{flag}</span>
+              <div>
+                <p className="font-semibold text-sm text-white">{name}</p>
+                <p className="text-xs text-gray-500">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Feature cards */}
-      <section className="mt-20 grid sm:grid-cols-3 gap-5">
+      <section className="mt-12 grid sm:grid-cols-3 gap-5">
         {[
           {
             icon: "⚡",

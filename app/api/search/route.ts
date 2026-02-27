@@ -12,8 +12,10 @@ const YF_SEARCH =
   "?quotesCount=7&newsCount=0&enableFuzzyQuery=true&quotesQueryId=tss_match_phrase_query";
 
 const HEADERS = {
-  "User-Agent": "Mozilla/5.0 (compatible; WhyIs/1.0)",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
   Accept: "application/json",
+  Referer: "https://finance.yahoo.com",
+  Origin: "https://finance.yahoo.com",
 };
 
 export interface SearchResult {

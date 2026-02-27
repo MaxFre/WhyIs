@@ -70,6 +70,10 @@ export default function TickerSearch() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    doSearch();
+  };
+
+  const doSearch = () => {
     // If top result exists use it, otherwise treat input as raw ticker
     if (results.length > 0) {
       navigate(results[0].ticker);
@@ -86,32 +90,35 @@ export default function TickerSearch() {
 
   return (
     <div className="relative">
-      <form
-        onSubmit={handleSubmit}
-        className="flex items-center gap-3 bg-gray-800 border border-gray-700 focus-within:border-green-500 rounded-2xl px-4 py-3 transition-colors"
-      >
-        <span className="text-gray-500 text-lg">🔍</span>
-        <input
-          ref={inputRef}
-          value={value}
-          onChange={(e) => { setValue(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 200)}
-          placeholder="Ticker or company name (e.g. AAPL, Chevron…)"
-          className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-lg"
-          autoComplete="off"
-          spellCheck={false}
-        />
-        {loading && (
-          <span className="text-gray-500 text-xs animate-pulse">…</span>
-        )}
+      <div className="flex items-center gap-2">
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 flex items-center gap-3 bg-gray-800 border border-gray-700 focus-within:border-green-500 rounded-2xl px-4 py-3 transition-colors min-w-0"
+        >
+          <span className="text-gray-500 text-lg">🔍</span>
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={(e) => { setValue(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 200)}
+            placeholder="Ticker or company name…"
+            className="flex-1 bg-transparent outline-none text-white placeholder-gray-500 text-base min-w-0"
+            autoComplete="off"
+            spellCheck={false}
+          />
+          {loading && (
+            <span className="text-gray-500 text-xs animate-pulse shrink-0">…</span>
+          )}
+        </form>
         <button
-          type="submit"
-          className="px-5 py-2 bg-green-500 hover:bg-green-400 text-black font-semibold rounded-xl text-sm transition-colors"
+          type="button"
+          onClick={doSearch}
+          className="shrink-0 px-5 py-3 bg-green-500 hover:bg-green-400 text-black font-semibold rounded-2xl text-sm transition-colors"
         >
           Search
         </button>
-      </form>
+      </div>
 
       {showDropdown && (showDidYouMean ? (
         /* ── "Did you mean?" single suggestion ── */

@@ -8,8 +8,10 @@ import { cacheGet, cacheSet, TTL } from "./cache";
 
 const YF = "https://query2.finance.yahoo.com";
 const HEADERS = {
-  "User-Agent": "Mozilla/5.0 (compatible; WhyIs/1.0)",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
   "Accept": "application/json",
+  "Referer": "https://finance.yahoo.com",
+  "Origin": "https://finance.yahoo.com",
 };
 
 // %5E = ^ (URL-encoded)
