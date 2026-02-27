@@ -106,7 +106,7 @@ export default async function HomePage() {
           },
         ].map((f) => (
           <div key={f.title} className="card">
-            <Image src={f.icon} alt={f.title} width={40} height={40} className="rounded-lg" />
+            <Image src={f.icon} alt={f.title} width={64} height={64} className="rounded-lg" />
             <h3 className="mt-3 font-semibold">{f.title}</h3>
             <p className="text-sm text-gray-400 mt-1">{f.desc}</p>
           </div>
