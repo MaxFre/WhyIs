@@ -91,29 +91,55 @@ export default async function StockPage({ params }: Props) {
   const direction = quote.changePercent >= 0 ? "up" : "down";
   const absPct = Math.abs(quote.changePercent).toFixed(2);
 
-  // Structured data (JSON-LD) for SEO
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: `Why Is ${quote.name} Stock ${direction} Today?`,
-    description: aiSummary.summary,
-    datePublished: new Date().toISOString(),
-    dateModified: new Date().toISOString(),
-    author: { "@type": "Organization", name: "WhyIs Finance" },
-    publisher: {
-      "@type": "Organization",
-      name: "WhyIs Finance",
-      logo: { "@type": "ImageObject", url: "/logo.png" },
+  const base = "https://www.whyisstock.com";
+
+  // Structured data (JSON-LD) for SEO — Article + BreadcrumbList
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${base}/stocks/${ticker}`,
+      },
+      headline: `Why Is ${quote.name} Stock ${direction} ${absPct}% Today?`,
+      description: aiSummary.summary,
+      datePublished: new Date().toISOString(),
+      dateModified: new Date().toISOString(),
+      author: { "@type": "Organization", name: "WhyIs Finance", url: base },
+      publisher: {
+        "@type": "Organization",
+        name: "WhyIs Finance",
+        url: base,
+        logo: { "@type": "ImageObject", url: `${base}/icon.svg` },
+      },
+      about: {
+        "@type": "Corporation",
+        name: quote.name,
+        tickerSymbol: ticker,
+      },
     },
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: base },
+        { "@type": "ListItem", position: 2, name: "Stocks", item: `${base}/markets` },
+        { "@type": "ListItem", position: 3, name: ticker, item: `${base}/stocks/${ticker}` },
+      ],
+    },
+  ];
 
   return (
     <>
-      {/* JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {/* JSON-LD structured data */}
+      {jsonLd.map((block, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(block) }}
+        />
+      ))}
 
       <div className="mx-auto max-w-6xl px-4 py-10">
         {/* Breadcrumb */}

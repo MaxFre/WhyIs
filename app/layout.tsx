@@ -18,13 +18,20 @@ export const metadata: Metadata = {
     default: "WhyIs — Why Is Your Stock Up or Down Today?",
   },
   description:
-    "Real-time AI-powered explanations for daily stock price movements. Find out why any stock is up or down today.",
+    "Real-time AI-powered explanations for daily stock price movements. Find out why any stock is up or down today — US, Europe, and Asian markets.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.whyisstock.com"
   ),
   openGraph: {
     siteName: "WhyIs",
     type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WhyIs — Why Is Your Stock Up or Down Today?",
+    description:
+      "AI-powered explanations for daily stock movements. Search any ticker.",
   },
   robots: {
     index: true,

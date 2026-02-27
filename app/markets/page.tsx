@@ -5,9 +5,10 @@ import { format } from "date-fns";
 export const revalidate = 120;
 
 export const metadata: Metadata = {
-  title: "Market Overview — Major Indices & Sectors",
+  title: "Market Overview — Global Indices & Sectors Today",
   description:
-    "Today's performance of major US market indices and sector ETFs. Real-time market sentiment.",
+    "Today's performance of major global market indices — S&P 500, Nasdaq, Dow Jones, Nikkei 225, FTSE 100, DAX, and more. Live sector ETF data and market sentiment.",
+  alternates: { canonical: "/markets" },
 };
 
 const WATCHED_TICKERS = [

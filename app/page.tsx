@@ -4,9 +4,80 @@ import Image from "next/image";
 import TickerSearch from "@/components/TickerSearch";
 
 export const metadata: Metadata = {
-  title: "Why Is Your Stock Up or Down Today?",
+  title: "Why Is Your Stock Up or Down Today? | WhyIs",
   description:
-    "Search any ticker to get a real-time AI explanation of today's stock price movement — news, market context, and a plain-English summary.",
+    "Find out why any stock is up or down today. Search any ticker for a real-time AI explanation — breaking news, market context, and a plain-English summary. Covers US, Europe, and Asian markets.",
+  alternates: { canonical: "/" },
+  keywords: [
+    "why is stock up", "why is stock down", "stock price today",
+    "stock movement explained", "AI stock analysis", "stock news today",
+    "why is AAPL up", "why is TSLA down", "stock market today",
+  ],
+};
+
+const BASE = "https://www.whyisstock.com";
+
+// WebSite schema — enables Google sitelinks searchbox
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "WhyIs",
+  url: BASE,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: { "@type": "EntryPoint", urlTemplate: `${BASE}/stocks/{search_term_string}` },
+    "query-input": "required name=search_term_string",
+  },
+};
+
+// Organization schema
+const orgSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "WhyIs Finance",
+  url: BASE,
+  logo: `${BASE}/icon.svg`,
+  sameAs: [],
+};
+
+// FAQ schema — targets common "why is stock" queries
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Why is my stock up or down today?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Stock prices move due to breaking news, earnings reports, analyst upgrades or downgrades, sector-wide trends, and broader market movements. WhyIs analyses all of these signals in real time and gives you a plain-English summary for any ticker.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How does WhyIs explain stock movements?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "WhyIs combines live price data, the latest news headlines, and market context (indices, sector performance) to generate an AI-powered summary that explains what is driving the stock price today.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Which stock markets does WhyIs cover?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "WhyIs covers stocks from the United States (NYSE, NASDAQ), China (Shanghai, Hong Kong), Japan (TSE), United Kingdom (LSE), India (NSE, BSE), Germany (XETRA, FSE), and Sweden (Nasdaq Stockholm).",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is WhyIs stock analysis free?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, WhyIs is completely free. Search any ticker to get an instant AI explanation of today's stock price movement — no account required.",
+      },
+    },
+  ],
 };
 
 // Popular US tickers to seed the homepage
@@ -18,6 +89,14 @@ const TRENDING = [
 export default async function HomePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 pt-12 sm:pt-20 pb-24 sm:pb-32">
+      {/* Structured data */}
+      {[websiteSchema, orgSchema, faqSchema].map((schema, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
       {/* Hero */}
       <div className="text-center mb-12 sm:mb-16">
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-snug">
