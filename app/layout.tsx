@@ -98,6 +98,7 @@ function Footer() {
       </p>
       <nav className="mt-4 flex flex-wrap justify-center gap-4 text-gray-500">
         <a href="/about" className="hover:text-white transition-colors">About</a>
+        <a href="/contact" className="hover:text-white transition-colors">Contact</a>
         <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
         <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
       </nav>

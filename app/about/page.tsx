@@ -90,8 +90,11 @@ export default function AboutPage() {
         <section>
           <h2 className="text-xl font-semibold text-white mt-8 mb-3">Contact</h2>
           <p>
-            Have questions, feedback, or partnership inquiries? Reach us at{" "}
-            <strong className="text-white">support@whyisstock.com</strong>.
+            Have questions, feedback, or partnership inquiries?{" "}
+            <a href="/contact" className="text-green-400 underline hover:text-green-300">
+              Send us a message
+            </a>
+            .
           </p>
         </section>
       </div>

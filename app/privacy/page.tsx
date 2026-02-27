@@ -130,8 +130,11 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-semibold text-white mt-8 mb-3">10. Contact Us</h2>
           <p>
-            If you have questions about this Privacy Policy, please contact us at{" "}
-            <strong className="text-white">support@whyisstock.com</strong>.
+            If you have questions about this Privacy Policy, please{" "}
+            <a href="/contact" className="text-green-400 underline hover:text-green-300">
+              contact us here
+            </a>
+            .
           </p>
         </section>
       </div>
