@@ -35,7 +35,6 @@ export async function GET(req: NextRequest) {
     if (!res.ok) return NextResponse.json({ results: [] });
 
     const data = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quotes: any[] = data.quotes ?? [];
 
     const results: SearchResult[] = quotes
