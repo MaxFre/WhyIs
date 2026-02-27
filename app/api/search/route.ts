@@ -23,7 +23,29 @@ export interface SearchResult {
   name: string;
   exchange: string;
   type: string;
-  flag?: string; // "🇸🇪" for Swedish
+  flag?: string;
+}
+
+/** Map a Yahoo Finance ticker suffix or exchange string to a country flag */
+function getFlag(ticker: string, exchange: string): string | undefined {
+  const t = ticker.toUpperCase();
+  const ex = exchange.toUpperCase();
+  if (t.endsWith(".ST"))                              return "🇸🇪";
+  if (t.endsWith(".T"))                               return "🇯🇵";
+  if (t.endsWith(".L"))                               return "🇬🇧";
+  if (t.endsWith(".HK"))                              return "🇨🇳";
+  if (t.endsWith(".SS") || t.endsWith(".SZ"))         return "🇨🇳";
+  if (t.endsWith(".NS") || t.endsWith(".BO"))         return "🇮🇳";
+  if (t.endsWith(".PA"))                              return "🇫🇷";
+  if (t.endsWith(".DE") || t.endsWith(".F"))          return "🇩🇪";
+  if (t.endsWith(".AX"))                              return "🇦🇺";
+  if (t.endsWith(".TO") || t.endsWith(".V"))          return "🇨🇦";
+  if (ex.includes("JPX") || ex.includes("TKS") || ex.includes("OSA")) return "🇯🇵";
+  if (ex.includes("LSE") || ex.includes("LON"))       return "🇬🇧";
+  if (ex.includes("HKG") || ex.includes("HKEX"))      return "🇨🇳";
+  if (ex.includes("NSE") || ex.includes("BSE") || ex.includes("NSI")) return "🇮🇳";
+  if (ex.includes("STO") || ex.includes("OMX"))       return "🇸🇪";
+  return undefined;
 }
 
 export async function GET(req: NextRequest) {
@@ -44,13 +66,18 @@ export async function GET(req: NextRequest) {
   const yfQuotes: any[] = yfRes.quotes ?? [];
   const yfResults: SearchResult[] = yfQuotes
     .filter((q) => q.quoteType === "EQUITY" || q.quoteType === "ETF")
-    .slice(0, 5)
-    .map((q) => ({
-      ticker: q.symbol ?? "",
-      name: q.longname ?? q.shortname ?? q.symbol ?? "",
-      exchange: q.exchDisp ?? q.exchange ?? "",
-      type: q.quoteType ?? "",
-    }))
+    .slice(0, 6)
+    .map((q) => {
+      const ticker: string = q.symbol ?? "";
+      const exchange: string = q.exchDisp ?? q.exchange ?? "";
+      return {
+        ticker,
+        name: q.longname ?? q.shortname ?? ticker,
+        exchange,
+        type: q.quoteType ?? "",
+        flag: getFlag(ticker, exchange),
+      };
+    })
     .filter((r) => r.ticker);
 
   // Avanza results (Swedish stocks)
@@ -60,7 +87,7 @@ export async function GET(req: NextRequest) {
       name: h.name,
       exchange: h.marketList,
       type: "EQUITY",
-      flag: "🇸🇪",
+      flag: getFlag(h.yahooTicker, h.marketList) ?? "🇸🇪",
     }))
     // Deduplicate against Yahoo results
     .filter((a) => !yfResults.some((y) => y.ticker === a.ticker))

@@ -62,8 +62,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function StockPage({ params }: Props) {
   const ticker = params.ticker.toUpperCase();
 
-  // Validate ticker: US (1-5 letters/digits), Swedish (.ST), or hyphenated like ERIC-B.ST
-  if (!/^[A-Z0-9]{1,5}$/.test(ticker) && !/^[A-Z0-9][A-Z0-9\-]{0,8}\.ST$/.test(ticker)) {
+  // Validate ticker: US (1-5 alphanumeric), or international with known exchange suffix
+  const validUS = /^[A-Z0-9]{1,5}$/.test(ticker);
+  const validIntl = /^[A-Z0-9][A-Z0-9\-\.]{0,9}\.(ST|T|L|HK|NS|BO|SS|SZ|PA|DE|AX|TO|V|CO|OL|HE|AS|MI|MC|LS|BR|VX)$/.test(ticker);
+  if (!validUS && !validIntl) {
     notFound();
   }
 

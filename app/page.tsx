@@ -62,13 +62,17 @@ export default async function HomePage() {
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">
           Markets covered
         </h2>
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-3">
           {[
-            { flag: "🇺🇸", name: "United States", desc: "NYSE · NASDAQ · AMEX" },
-            { flag: "🇸🇪", name: "Sweden",        desc: "Nasdaq Stockholm · NGM" },
+            { flag: "🇺🇸", name: "United States", desc: "NYSE · NASDAQ" },
+            { flag: "🇨🇳", name: "China",         desc: "Shanghai · HK" },
+            { flag: "🇯🇵", name: "Japan",         desc: "Tokyo (TSE)" },
+            { flag: "🇬🇧", name: "United Kingdom", desc: "London (LSE)" },
+            { flag: "🇮🇳", name: "India",         desc: "NSE · BSE" },
+            { flag: "🇸🇪", name: "Sweden",        desc: "Nasdaq Sthlm" },
           ].map(({ flag, name, desc }) => (
             <div key={name} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-800 border border-gray-700">
-              <span className="text-3xl">{flag}</span>
+              <span className="text-2xl">{flag}</span>
               <div>
                 <p className="font-semibold text-sm text-white">{name}</p>
                 <p className="text-xs text-gray-500">{desc}</p>
