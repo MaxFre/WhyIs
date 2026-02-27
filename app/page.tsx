@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import TickerSearch from "@/components/TickerSearch";
 
 export const metadata: Metadata = {
@@ -89,23 +90,23 @@ export default async function HomePage() {
       <section className="mt-12 grid sm:grid-cols-3 gap-5">
         {[
           {
-            icon: "⚡",
+            icon: "/icons/realDataIcon.png",
             title: "Real-time data",
             desc: "Price, volume, and intraday changes refreshed every minute.",
           },
           {
-            icon: "🤖",
+            icon: "/icons/aiIcon.png",
             title: "AI summaries",
             desc: "Concise, neutral plain-English explanations of what's driving each move.",
           },
           {
-            icon: "📰",
+            icon: "/icons/newsIcon.png",
             title: "News & sentiment",
             desc: "Latest headlines with automatic positive/negative tagging.",
           },
         ].map((f) => (
           <div key={f.title} className="card">
-            <span className="text-2xl">{f.icon}</span>
+            <Image src={f.icon} alt={f.title} width={40} height={40} className="rounded-lg" />
             <h3 className="mt-3 font-semibold">{f.title}</h3>
             <p className="text-sm text-gray-400 mt-1">{f.desc}</p>
           </div>
