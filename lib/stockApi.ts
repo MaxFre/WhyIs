@@ -70,15 +70,25 @@ export async function getStockQuote(ticker: string): Promise<StockQuote> {
   const priceModule: AnyJson = qsResult.price ?? {};
 
   const price: number = meta.regularMarketPrice;
-  const prev: number = meta.chartPreviousClose ?? meta.previousClose ?? price;
+  // Use Yahoo's official change fields — do NOT recompute from chartPreviousClose
+  // (chartPreviousClose on a 5d chart is 5 days ago, not yesterday)
+  const prev: number =
+    meta.regularMarketPreviousClose ??
+    meta.chartPreviousClose ??
+    meta.previousClose ??
+    price;
+  const change: number =
+    meta.regularMarketChange ?? price - prev;
+  const changePct: number =
+    meta.regularMarketChangePercent ?? (prev ? ((price - prev) / prev) * 100 : 0);
 
   const result: StockQuote = {
     ticker,
     name: priceModule.longName ?? meta.longName ?? meta.shortName ?? ticker,
     price,
     previousClose: prev,
-    change: price - prev,
-    changePercent: prev ? ((price - prev) / prev) * 100 : 0,
+    change,
+    changePercent: changePct,
     volume: meta.regularMarketVolume ?? priceModule.regularMarketVolume?.raw ?? 0,
     avgVolume:
       detail.averageVolume?.raw ?? priceModule.averageDailyVolume10Day?.raw ?? 0,

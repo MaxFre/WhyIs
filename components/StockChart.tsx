@@ -28,6 +28,7 @@ export default function StockChart({ candles, changePercent }: Props) {
         layout: {
           background: { color: "transparent" },
           textColor: "#6b7280",
+          attributionLogo: false,
         },
         grid: {
           vertLines: { color: "#1f2937", style: LineStyle.Dotted },
