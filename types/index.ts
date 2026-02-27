@@ -49,6 +49,7 @@ export interface IndexQuote {
   name: string;
   symbol: string;
   changePercent: number;
+  flag?: string;
 }
 
 export interface SectorPerformance {

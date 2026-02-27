@@ -16,9 +16,16 @@ const HEADERS = {
 
 // %5E = ^ (URL-encoded)
 const INDICES = [
-  { name: "S&P 500",   symbol: "%5EGSPC", displaySymbol: "^GSPC" },
-  { name: "Nasdaq",    symbol: "%5EIXIC", displaySymbol: "^IXIC" },
-  { name: "Dow Jones", symbol: "%5EDJI",  displaySymbol: "^DJI"  },
+  { name: "S&P 500",      symbol: "%5EGSPC",    displaySymbol: "^GSPC",    flag: "🇺🇸" },
+  { name: "Nasdaq",       symbol: "%5EIXIC",    displaySymbol: "^IXIC",    flag: "🇺🇸" },
+  { name: "Dow Jones",    symbol: "%5EDJI",     displaySymbol: "^DJI",     flag: "🇺🇸" },
+  { name: "Shanghai",     symbol: "000001.SS",  displaySymbol: "000001.SS", flag: "🇨🇳" },
+  { name: "Hang Seng",    symbol: "%5EHSI",     displaySymbol: "^HSI",     flag: "🇨🇳" },
+  { name: "Nikkei 225",   symbol: "%5EN225",    displaySymbol: "^N225",    flag: "🇯🇵" },
+  { name: "FTSE 100",     symbol: "%5EFTSE",    displaySymbol: "^FTSE",    flag: "🇬🇧" },
+  { name: "Nifty 50",     symbol: "%5ENSEI",    displaySymbol: "^NSEI",    flag: "🇮🇳" },
+  { name: "DAX",          symbol: "%5EGDAXI",   displaySymbol: "^GDAXI",   flag: "🇩🇪" },
+  { name: "OMX Stockholm", symbol: "%5EOMX",    displaySymbol: "^OMX",     flag: "🇸🇪" },
 ];
 
 const SECTOR_ETFS: Record<string, string> = {
@@ -67,6 +74,7 @@ export async function getMarketContext(sector?: string): Promise<MarketContext> 
     name: idx.name,
     symbol: idx.displaySymbol,
     changePercent: changes[i],
+    flag: idx.flag,
   }));
 
   let sectorPerf: SectorPerformance | null = null;

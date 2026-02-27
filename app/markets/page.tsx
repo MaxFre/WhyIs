@@ -37,12 +37,15 @@ export default async function MarketsPage() {
         <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-4">
           Major Indices
         </h2>
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {context.indices.map((idx) => {
             const up = idx.changePercent >= 0;
             return (
               <div key={idx.symbol} className="card text-center">
-                <p className="text-gray-400 text-sm font-medium">{idx.name}</p>
+                <div className="flex items-center justify-center gap-2">
+                  {idx.flag && <span className="text-base">{idx.flag}</span>}
+                  <p className="text-gray-400 text-sm font-medium">{idx.name}</p>
+                </div>
                 <p
                   className={`text-2xl font-bold mt-2 tabular-nums ${
                     up ? "text-green-400" : "text-red-400"
