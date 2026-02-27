@@ -32,9 +32,11 @@ export async function getTickerNews(
   const cached = cacheGet<NewsArticle[]>(cacheKey);
   if (cached) return cached;
 
+  const isSE = ticker.endsWith(".ST");
+
   try {
     const res = await fetch(
-      `${YF}/v1/finance/search?q=${ticker}&newsCount=${maxArticles}&language=en-US`,
+      `${YF}/v1/finance/search?q=${ticker}&newsCount=${maxArticles}&language=${isSE ? "sv-SE" : "en-US"}`,
       { headers: HEADERS, next: { revalidate: 600 } }
     );
     if (!res.ok) throw new Error(`News fetch failed: ${res.status}`);

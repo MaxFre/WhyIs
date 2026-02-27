@@ -1,10 +1,11 @@
 /**
  * GET /api/search?q=chevron
- * Proxies Yahoo Finance quote search — returns ticker + company name matches.
- * Enables name-based and fuzzy/misspelling-tolerant lookup.
+ * Searches Yahoo Finance + Avanza (Swedish stocks) in parallel.
+ * Enables name-based, fuzzy, and Swedish company name lookup.
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { searchAvanza } from "@/lib/avanzaApi";
 
 const YF_SEARCH =
   "https://query2.finance.yahoo.com/v1/finance/search" +
@@ -20,6 +21,7 @@ export interface SearchResult {
   name: string;
   exchange: string;
   type: string;
+  flag?: string; // "🇸🇪" for Swedish
 }
 
 export async function GET(req: NextRequest) {
@@ -27,29 +29,43 @@ export async function GET(req: NextRequest) {
   if (!q || q.length < 1)
     return NextResponse.json({ results: [] });
 
-  try {
-    const res = await fetch(`${YF_SEARCH}&q=${encodeURIComponent(q)}`, {
+  // Run Yahoo Finance and Avanza searches in parallel
+  const [yfRes, avanzaHits] = await Promise.all([
+    fetch(`${YF_SEARCH}&q=${encodeURIComponent(q)}`, {
       headers: HEADERS,
       next: { revalidate: 60 },
-    });
-    if (!res.ok) return NextResponse.json({ results: [] });
+    }).then((r) => r.ok ? r.json() : { quotes: [] }).catch(() => ({ quotes: [] })),
+    searchAvanza(q).catch(() => []),
+  ]);
 
-    const data = await res.json();
-    const quotes: any[] = data.quotes ?? [];
+  // Yahoo results
+  const yfQuotes: any[] = yfRes.quotes ?? [];
+  const yfResults: SearchResult[] = yfQuotes
+    .filter((q) => q.quoteType === "EQUITY" || q.quoteType === "ETF")
+    .slice(0, 5)
+    .map((q) => ({
+      ticker: q.symbol ?? "",
+      name: q.longname ?? q.shortname ?? q.symbol ?? "",
+      exchange: q.exchDisp ?? q.exchange ?? "",
+      type: q.quoteType ?? "",
+    }))
+    .filter((r) => r.ticker);
 
-    const results: SearchResult[] = quotes
-      .filter((q) => q.quoteType === "EQUITY" || q.quoteType === "ETF")
-      .slice(0, 6)
-      .map((q) => ({
-        ticker: q.symbol ?? "",
-        name: q.longname ?? q.shortname ?? q.symbol ?? "",
-        exchange: q.exchDisp ?? q.exchange ?? "",
-        type: q.quoteType ?? "",
-      }))
-      .filter((r) => r.ticker);
+  // Avanza results (Swedish stocks)
+  const avResults: SearchResult[] = avanzaHits
+    .map((h) => ({
+      ticker: h.yahooTicker,
+      name: h.name,
+      exchange: h.marketList,
+      type: "EQUITY",
+      flag: "🇸🇪",
+    }))
+    // Deduplicate against Yahoo results
+    .filter((a) => !yfResults.some((y) => y.ticker === a.ticker))
+    .slice(0, 4);
 
-    return NextResponse.json({ results });
-  } catch {
-    return NextResponse.json({ results: [] });
-  }
+  // Merge: Yahoo first, then Swedish ones not already present
+  const results = [...yfResults, ...avResults].slice(0, 8);
+
+  return NextResponse.json({ results });
 }

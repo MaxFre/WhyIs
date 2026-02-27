@@ -1,9 +1,15 @@
 /**
- * Stock data via Yahoo Finance (no API key required).
+ * Stock data via Yahoo Finance (primary) + Avanza (fallback for Swedish .ST tickers).
  */
 
 import { Candle, StockQuote } from "@/types";
 import { cacheGet, cacheSet, TTL } from "./cache";
+import {
+  isSwedishTicker,
+  resolveOrderbookId,
+  getAvanzaQuote,
+  getAvanzaCandles,
+} from "./avanzaApi";
 
 const YF = "https://query2.finance.yahoo.com";
 const HEADERS = {
@@ -40,12 +46,24 @@ export async function getStockQuote(ticker: string): Promise<StockQuote> {
     yfFetchSafe<AnyJson>(`${YF}/v10/finance/quoteSummary/${ticker}?modules=assetProfile,summaryDetail,price`),
   ]);
 
-  const meta: AnyJson = chart.chart?.result?.[0]?.meta ?? {};
+  const meta: AnyJson = chart?.chart?.result?.[0]?.meta ?? {};
+
+  // If Yahoo returned no price, fall back to Avanza for Swedish tickers
   if (!meta.regularMarketPrice) {
+    if (isSwedishTicker(ticker)) {
+      const orderbookId = await resolveOrderbookId(ticker);
+      if (orderbookId) {
+        const avQuote = await getAvanzaQuote(orderbookId, ticker);
+        if (avQuote) {
+          cacheSet(cacheKey, avQuote, TTL.QUOTE);
+          return avQuote;
+        }
+      }
+    }
     throw new Error(`No quote data found for ticker "${ticker}"`);
   }
 
-  // quoteSummary fields (optional)
+  // quoteSummary optional enrichment
   const qsResult: AnyJson = summary?.quoteSummary?.result?.[0] ?? {};
   const asset: AnyJson = qsResult.assetProfile ?? {};
   const detail: AnyJson = qsResult.summaryDetail ?? {};
@@ -62,7 +80,8 @@ export async function getStockQuote(ticker: string): Promise<StockQuote> {
     change: price - prev,
     changePercent: prev ? ((price - prev) / prev) * 100 : 0,
     volume: meta.regularMarketVolume ?? priceModule.regularMarketVolume?.raw ?? 0,
-    avgVolume: detail.averageVolume?.raw ?? priceModule.averageDailyVolume10Day?.raw ?? 0,
+    avgVolume:
+      detail.averageVolume?.raw ?? priceModule.averageDailyVolume10Day?.raw ?? 0,
     marketCap: detail.marketCap?.raw ?? priceModule.marketCap?.raw ?? 0,
     high52w: detail.fiftyTwoWeekHigh?.raw ?? 0,
     low52w: detail.fiftyTwoWeekLow?.raw ?? 0,
@@ -71,6 +90,19 @@ export async function getStockQuote(ticker: string): Promise<StockQuote> {
     currency: meta.currency ?? "USD",
     timestamp: (meta.regularMarketTime ?? Math.floor(Date.now() / 1000)) * 1000,
   };
+
+  // Enrich Swedish tickers via Avanza if company name is missing
+  if (isSwedishTicker(ticker) && result.name === ticker) {
+    const orderbookId = await resolveOrderbookId(ticker);
+    if (orderbookId) {
+      const avQuote = await getAvanzaQuote(orderbookId, ticker);
+      if (avQuote?.name && avQuote.name !== ticker) {
+        result.name = avQuote.name;
+        result.exchange = avQuote.exchange;
+        if (result.sector === "Unknown") result.sector = avQuote.sector;
+      }
+    }
+  }
 
   cacheSet(cacheKey, result, TTL.QUOTE);
   return result;
@@ -82,26 +114,43 @@ export async function getIntradayCandles(ticker: string): Promise<Candle[]> {
   const cached = cacheGet<Candle[]>(cacheKey);
   if (cached) return cached;
 
-  const data = await yfFetch<AnyJson>(
+  // Try Yahoo Finance first
+  const data = await yfFetchSafe<AnyJson>(
     `${YF}/v8/finance/chart/${ticker}?interval=5m&range=1d`,
     300
   );
 
-  const result = data.chart?.result?.[0];
-  if (!result?.timestamp) return [];
+  const yfResult = data?.chart?.result?.[0];
+  if (yfResult?.timestamp) {
+    const q: AnyJson = yfResult.indicators?.quote?.[0] ?? {};
+    const candles: Candle[] = (yfResult.timestamp as number[])
+      .map((t: number, i: number) => ({
+        time: t,
+        open: q.open?.[i] ?? 0,
+        high: q.high?.[i] ?? 0,
+        low: q.low?.[i] ?? 0,
+        close: q.close?.[i] ?? 0,
+        volume: q.volume?.[i] ?? 0,
+      }))
+      .filter((c) => c.close > 0);
 
-  const q: AnyJson = result.indicators?.quote?.[0] ?? {};
-  const candles: Candle[] = (result.timestamp as number[])
-    .map((t: number, i: number) => ({
-      time: t,
-      open: q.open?.[i] ?? 0,
-      high: q.high?.[i] ?? 0,
-      low: q.low?.[i] ?? 0,
-      close: q.close?.[i] ?? 0,
-      volume: q.volume?.[i] ?? 0,
-    }))
-    .filter((c) => c.close > 0);
+    if (candles.length > 0) {
+      cacheSet(cacheKey, candles, TTL.CANDLES);
+      return candles;
+    }
+  }
 
-  cacheSet(cacheKey, candles, TTL.CANDLES);
-  return candles;
+  // Avanza fallback for Swedish tickers
+  if (isSwedishTicker(ticker)) {
+    const orderbookId = await resolveOrderbookId(ticker);
+    if (orderbookId) {
+      const candles = await getAvanzaCandles(orderbookId);
+      if (candles.length > 0) {
+        cacheSet(cacheKey, candles, TTL.CANDLES);
+        return candles;
+      }
+    }
+  }
+
+  return [];
 }

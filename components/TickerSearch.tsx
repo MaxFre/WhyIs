@@ -8,6 +8,7 @@ interface SearchResult {
   name: string;
   exchange: string;
   type: string;
+  flag?: string;
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -140,6 +141,7 @@ export default function TickerSearch() {
                 <span className="flex items-center gap-3 min-w-0">
                   <span className="font-mono font-bold text-green-400 shrink-0 w-14">{r.ticker}</span>
                   <span className="text-sm text-gray-200 truncate">{r.name}</span>
+                  {r.flag && <span className="text-base shrink-0">{r.flag}</span>}
                 </span>
                 <span className="text-xs text-gray-500 shrink-0">{r.exchange}</span>
               </button>
