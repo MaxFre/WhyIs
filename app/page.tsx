@@ -19,14 +19,17 @@ export default async function HomePage() {
     <div className="mx-auto max-w-4xl px-4 pt-20 pb-32">
       {/* Hero */}
       <div className="text-center mb-16">
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5">
+        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-tight">
           Why is{" "}
           <span className="text-green-400">[stock]</span>{" "}
-          down today?
+          <span className="text-green-400">up</span>
+          <span className="text-gray-500 font-light mx-2">/</span>
+          <span className="text-red-400">down</span>{" "}
+          today?
         </h1>
         <p className="text-gray-400 text-lg max-w-xl mx-auto">
-          Get a real-time, AI-generated explanation for any stock&apos;s daily price
-          movement — news, market context, and a plain-English summary.
+          Search any ticker to instantly see why it&apos;s moving — AI-powered news analysis,
+          market context, and a plain-English explanation.
         </p>
       </div>
 
@@ -64,7 +67,7 @@ export default async function HomePage() {
           {
             icon: "🤖",
             title: "AI summaries",
-            desc: "GPT-4o-mini generates concise, neutral 150-word explanations.",
+            desc: "Concise, neutral plain-English explanations of what's driving each move.",
           },
           {
             icon: "📰",
