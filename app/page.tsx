@@ -19,12 +19,15 @@ export default async function HomePage() {
     <div className="mx-auto max-w-4xl px-4 pt-20 pb-32">
       {/* Hero */}
       <div className="text-center mb-16">
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-tight">
+        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-tight pt-10">
           Why is{" "}
           <span className="text-green-400">[stock]</span>{" "}
-          <span className="text-green-400">up</span>
-          <span className="text-gray-500 font-light mx-2">/</span>
-          <span className="text-red-400">down</span>{" "}
+          <span className="relative inline-block">
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-green-400 italic text-3xl sm:text-4xl font-extrabold whitespace-nowrap">
+              Up
+            </span>
+            <span className="text-red-400 italic">Down</span>
+          </span>{" "}
           today?
         </h1>
         <p className="text-gray-400 text-lg max-w-xl mx-auto">
