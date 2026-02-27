@@ -44,6 +44,8 @@ export default function StockChart({ candles, changePercent }: Props) {
           secondsVisible: false,
         },
         rightPriceScale: { borderColor: "#374151" },
+        handleScroll: false,
+        handleScale: false,
       });
 
       const areaSeries = chart.addAreaSeries({
