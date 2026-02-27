@@ -13,7 +13,6 @@ import StockChart from "@/components/StockChart";
 import NewsList from "@/components/NewsList";
 import MarketContextCard from "@/components/MarketContextCard";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
-import AdSlot from "@/components/AdSlot";
 import RefreshButton from "@/components/RefreshButton";
 import TickerSearch from "@/components/TickerSearch";
 
@@ -141,9 +140,6 @@ export default async function StockPage({ params }: Props) {
           <RefreshButton ticker={ticker} />
         </div>
 
-        {/* Top ad banner */}
-        <AdSlot format="leaderboard" className="mb-6" />
-
         {/* Two-column layout */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main column */}
@@ -167,22 +163,7 @@ export default async function StockPage({ params }: Props) {
               <TickerSearch />
             </div>
 
-            {/* Sidebar ad */}
-            <AdSlot format="rectangle" />
 
-            {/* Broker affiliate placeholder */}
-            <div className="card border-dashed border-brand-700 text-center text-sm text-gray-500 py-6">
-              <p className="font-semibold text-gray-400 mb-1">Trade {ticker}</p>
-              <p className="text-xs">
-                Open an account with one of our broker partners.
-              </p>
-              <a
-                href="#"
-                className="mt-3 inline-block px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-semibold hover:bg-green-500/20 transition-colors"
-              >
-                View brokers →
-              </a>
-            </div>
           </div>
         </div>
       </div>
