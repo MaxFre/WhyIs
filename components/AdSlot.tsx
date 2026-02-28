@@ -1,25 +1,28 @@
 "use client";
 
-/**
- * Plug-in AdSense or any ad network here.
- * Currently renders a placeholder box.
- *
- * To enable AdSense:
- *   1. Set NEXT_PUBLIC_ADSENSE_CLIENT in .env.local
- *   2. Replace the placeholder div with <ins class="adsbygoogle" ...>
- */
+import { useEffect } from "react";
+
+const ADSENSE_CLIENT =
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "ca-pub-3379757990050247";
 
 interface Props {
-  slot?: string;
+  slot: string;
   format?: "auto" | "rectangle" | "leaderboard";
   className?: string;
 }
 
-export default function AdSlot({ format = "auto", className = "" }: Props) {
-  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+export default function AdSlot({ slot, format = "auto", className = "" }: Props) {
+  const isDev = process.env.NODE_ENV === "development";
 
-  if (!adsenseClient) {
-    // Dev placeholder
+  useEffect(() => {
+    if (isDev) return;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+    } catch {}
+  }, [isDev]);
+
+  if (isDev) {
     return (
       <div
         className={`flex items-center justify-center rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 text-xs text-gray-600 ${className}`}
@@ -30,10 +33,16 @@ export default function AdSlot({ format = "auto", className = "" }: Props) {
     );
   }
 
-  // Production: render AdSense unit
   return (
     <div className={className}>
-      {/* Add real AdSense ins tag here */}
+      <ins
+        className="adsbygoogle"
+        style={{ display: "block" }}
+        data-ad-client={ADSENSE_CLIENT}
+        data-ad-slot={slot}
+        data-ad-format={format}
+        data-full-width-responsive="true"
+      />
     </div>
   );
 }
