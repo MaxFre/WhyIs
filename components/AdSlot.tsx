@@ -17,10 +17,8 @@ export default function AdSlot({ slot, format = "auto", className = "" }: Props)
   useEffect(() => {
     if (isDev) return;
     try {
-      (
-        (window as Window & { adsbygoogle: unknown[] }).adsbygoogle =
-          (window as Window & { adsbygoogle: unknown[] }).adsbygoogle || []
-      ).push({});
+      const w = window as unknown as { adsbygoogle: object[] };
+      (w.adsbygoogle = w.adsbygoogle || []).push({});
     } catch {}
   }, [isDev]);
 
