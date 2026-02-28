@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import TickerSearch from "@/components/TickerSearch";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function NotFound() {
   return (
