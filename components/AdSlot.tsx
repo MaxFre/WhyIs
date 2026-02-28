@@ -17,8 +17,10 @@ export default function AdSlot({ slot, format = "auto", className = "" }: Props)
   useEffect(() => {
     if (isDev) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      (
+        (window as Window & { adsbygoogle: unknown[] }).adsbygoogle =
+          (window as Window & { adsbygoogle: unknown[] }).adsbygoogle || []
+      ).push({});
     } catch {}
   }, [isDev]);
 
