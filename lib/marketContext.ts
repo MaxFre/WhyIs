@@ -3,8 +3,8 @@
  * No API key required.
  */
 
+import { unstable_cache } from "next/cache";
 import { IndexQuote, MarketContext, SectorPerformance } from "@/types";
-import { cacheGet, cacheSet, TTL } from "./cache";
 
 const YF = "https://query2.finance.yahoo.com";
 const HEADERS = {
@@ -60,11 +60,7 @@ async function fetchChangePercent(symbol: string): Promise<number> {
   }
 }
 
-export async function getMarketContext(sector?: string): Promise<MarketContext> {
-  const cacheKey = `mktctx:${sector ?? "none"}`;
-  const cached = cacheGet<MarketContext>(cacheKey);
-  if (cached) return cached;
-
+async function _getMarketContext(sector?: string): Promise<MarketContext> {
   const sectorEtf = sector ? (SECTOR_ETFS[sector] ?? null) : null;
   const symbols = [...INDICES.map((i) => i.symbol), ...(sectorEtf ? [sectorEtf] : [])];
 
@@ -87,7 +83,11 @@ export async function getMarketContext(sector?: string): Promise<MarketContext> 
   const marketSentiment =
     negCount >= 2 ? "risk-off" : posCount >= 2 ? "risk-on" : "neutral";
 
-  const result: MarketContext = { indices, sectorPerf, marketSentiment };
-  cacheSet(cacheKey, result, TTL.MARKET_CONTEXT);
-  return result;
+  return { indices, sectorPerf, marketSentiment };
 }
+
+export const getMarketContext = unstable_cache(
+  _getMarketContext,
+  ["market-context"],
+  { revalidate: 120 },
+);

@@ -146,17 +146,17 @@ export default async function HomePage() {
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { code: "US", name: "United States", desc: "NYSE · NASDAQ" },
-            { code: "CN", name: "China",         desc: "Shanghai · HK" },
-            { code: "JP", name: "Japan",         desc: "Tokyo (TSE)" },
-            { code: "GB", name: "UK",            desc: "London (LSE)" },
-            { code: "IN", name: "India",         desc: "NSE · BSE" },
-            { code: "DE", name: "Germany",       desc: "XETRA · FSE" },
-            { code: "SE", name: "Sweden",        desc: "Nasdaq Sthlm" },
-          ].map(({ code, name, desc }) => (
+            { flag: "🇺🇸", name: "United States", desc: "NYSE · NASDAQ" },
+            { flag: "🇨🇳", name: "China",         desc: "Shanghai · HK" },
+            { flag: "🇯🇵", name: "Japan",         desc: "Tokyo (TSE)" },
+            { flag: "🇬🇧", name: "UK",            desc: "London (LSE)" },
+            { flag: "🇮🇳", name: "India",         desc: "NSE · BSE" },
+            { flag: "🇩🇪", name: "Germany",       desc: "XETRA · FSE" },
+            { flag: "🇸🇪", name: "Sweden",        desc: "Nasdaq Sthlm" },
+          ].map(({ flag, name, desc }) => (
             <div key={name} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gray-800 border border-gray-700">
-              <span className="shrink-0 w-9 h-9 rounded-lg bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-200 tracking-wide">
-                {code}
+              <span className="shrink-0 w-9 h-9 rounded-lg bg-gray-700 flex items-center justify-center text-2xl">
+                {flag}
               </span>
               <div className="min-w-0">
                 <p className="font-semibold text-sm text-white truncate">{name}</p>
