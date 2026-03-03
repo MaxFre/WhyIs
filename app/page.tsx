@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import TickerSearch from "@/components/TickerSearch";
 import AdSenseLoader from "@/components/AdSenseLoader";
+import { getMarketContext } from "@/lib/marketContext";
 
 export const metadata: Metadata = {
   title: "Why Is Your Stock Up or Down Today? | WhyIs",
@@ -87,7 +88,11 @@ const TRENDING = [
   "META", "GOOGL", "NFLX", "AMD", "SPY",
 ];
 
+export const revalidate = 120;
+
 export default async function HomePage() {
+  const context = await getMarketContext();
+
   return (
     <div className="mx-auto max-w-4xl px-4 pt-12 sm:pt-20 pb-24 sm:pb-32">
       {/* Structured data */}
@@ -100,7 +105,7 @@ export default async function HomePage() {
       ))}
       <AdSenseLoader />
       {/* Hero */}
-      <div className="text-center mb-12 sm:mb-16">
+      <div className="text-center mb-8 sm:mb-10">
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-snug">
           Why is{" "}
           <span className="text-green-400">[stock]</span>
@@ -116,10 +121,57 @@ export default async function HomePage() {
         </p>
       </div>
 
+      {/* Markets covered — compact, above search */}
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-6 text-xs text-gray-500">
+        <span className="uppercase tracking-widest font-semibold text-gray-600 mr-1">Markets:</span>
+        {[
+          { flag: "🇺🇸", label: "US" },
+          { flag: "🇨🇳", label: "CN" },
+          { flag: "🇯🇵", label: "JP" },
+          { flag: "🇬🇧", label: "UK" },
+          { flag: "🇮🇳", label: "IN" },
+          { flag: "🇩🇪", label: "DE" },
+          { flag: "🇸🇪", label: "SE" },
+        ].map(({ flag, label }) => (
+          <span key={label} className="inline-flex items-center gap-1">
+            <span>{flag}</span>
+            <span>{label}</span>
+          </span>
+        ))}
+      </div>
+
       {/* Search */}
-      <div className="mb-14">
+      <div className="mb-10">
         <TickerSearch />
       </div>
+
+      {/* Major Indices */}
+      <section className="mb-14">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3">
+          Major Indices
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {context.indices.map((idx) => {
+            const up = idx.changePercent >= 0;
+            return (
+              <div key={idx.symbol} className="card text-center">
+                <div className="flex items-center justify-center gap-2">
+                  {idx.flag && <span className="text-base">{idx.flag}</span>}
+                  <p className="text-gray-400 text-sm font-medium">{idx.name}</p>
+                </div>
+                <p
+                  className={`text-2xl font-bold mt-2 tabular-nums ${
+                    up ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {up ? "+" : ""}
+                  {idx.changePercent.toFixed(2)}%
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Trending */}
       <section>
@@ -135,34 +187,6 @@ export default async function HomePage() {
             >
               {ticker}
             </a>
-          ))}
-        </div>
-      </section>
-
-      {/* Countries covered */}
-      <section className="mt-16">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">
-          Markets covered
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { flag: "🇺🇸", name: "United States", desc: "NYSE · NASDAQ" },
-            { flag: "🇨🇳", name: "China",         desc: "Shanghai · HK" },
-            { flag: "🇯🇵", name: "Japan",         desc: "Tokyo (TSE)" },
-            { flag: "🇬🇧", name: "UK",            desc: "London (LSE)" },
-            { flag: "🇮🇳", name: "India",         desc: "NSE · BSE" },
-            { flag: "🇩🇪", name: "Germany",       desc: "XETRA · FSE" },
-            { flag: "🇸🇪", name: "Sweden",        desc: "Nasdaq Sthlm" },
-          ].map(({ flag, name, desc }) => (
-            <div key={name} className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gray-800 border border-gray-700">
-              <span className="shrink-0 w-9 h-9 rounded-lg bg-gray-700 flex items-center justify-center text-2xl">
-                {flag}
-              </span>
-              <div className="min-w-0">
-                <p className="font-semibold text-sm text-white truncate">{name}</p>
-                <p className="text-xs text-gray-500 truncate">{desc}</p>
-              </div>
-            </div>
           ))}
         </div>
       </section>
