@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import Image from "next/image";
 import TickerSearch from "@/components/TickerSearch";
 import AdSenseLoader from "@/components/AdSenseLoader";

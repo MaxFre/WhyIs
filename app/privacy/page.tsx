@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "WhyIs privacy policy — how we collect, use, and protect your data.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {

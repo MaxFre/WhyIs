@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: "Terms of Service",
   description:
     "WhyIs terms of service — rules and guidelines for using our website.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

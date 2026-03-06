@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: "About WhyIs",
   description:
     "Learn about WhyIs — a free tool that explains why stocks are moving up or down today using real-time data and AI analysis.",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {
