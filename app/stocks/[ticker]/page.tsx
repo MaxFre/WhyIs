@@ -185,10 +185,12 @@ export default async function StockPage({ params }: Props) {
 
             {/* Ad unit — set NEXT_PUBLIC_AD_SLOT_SIDEBAR in Vercel env vars */}
             {process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR && (
-              <AdSlot
-                slot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
-                format="rectangle"
-              />
+              <div className="hidden lg:block">
+                <AdSlot
+                  slot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
+                  format="rectangle"
+                />
+              </div>
             )}
 
             {/* Sidebar search */}

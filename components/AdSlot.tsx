@@ -49,13 +49,13 @@ export default function AdSlot({ slot, mobileSlot, format = "auto", className = 
   return (
     <div className={className}>
       {mobileSlot && (
-        <div className="sm:hidden">
+        <div className="sm:hidden" style={{ maxHeight: 100, overflow: "hidden" }}>
           <ins
             className="adsbygoogle"
-            style={{ display: "block" }}
+            style={{ display: "block", height: 100 }}
             data-ad-client={ADSENSE_CLIENT}
             data-ad-slot={mobileSlot}
-            data-ad-format="auto"
+            data-ad-format="horizontal"
             data-full-width-responsive="true"
           />
         </div>
