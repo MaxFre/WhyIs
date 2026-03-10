@@ -9,9 +9,11 @@ interface Props {
   slot: string;
   format?: "auto" | "rectangle" | "leaderboard";
   className?: string;
+  /** On mobile (<640px), collapse the ad to a thin horizontal bar (~90px) */
+  mobileBanner?: boolean;
 }
 
-export default function AdSlot({ slot, format = "auto", className = "" }: Props) {
+export default function AdSlot({ slot, format = "auto", className = "", mobileBanner = false }: Props) {
   const isDev = process.env.NODE_ENV === "development";
 
   useEffect(() => {
@@ -22,11 +24,13 @@ export default function AdSlot({ slot, format = "auto", className = "" }: Props)
     } catch {}
   }, [isDev]);
 
+  const mobileClass = mobileBanner ? "max-h-[90px] sm:max-h-none overflow-hidden" : "";
+
   if (isDev) {
     return (
       <div
-        className={`flex items-center justify-center rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 text-xs text-gray-600 ${className}`}
-        style={{ minHeight: format === "leaderboard" ? 90 : 250 }}
+        className={`flex items-center justify-center rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 text-xs text-gray-600 ${mobileClass} ${className}`}
+        style={{ minHeight: format === "leaderboard" ? 90 : mobileBanner ? undefined : 250, height: mobileBanner ? undefined : undefined }}
       >
         Advertisement
       </div>
@@ -34,7 +38,7 @@ export default function AdSlot({ slot, format = "auto", className = "" }: Props)
   }
 
   return (
-    <div className={className}>
+    <div className={`${mobileClass} ${className}`}>
       <ins
         className="adsbygoogle"
         style={{ display: "block" }}

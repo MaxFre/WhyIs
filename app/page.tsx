@@ -222,6 +222,7 @@ export default async function HomePage() {
           slot={process.env.NEXT_PUBLIC_AD_SLOT_HOMEPAGE}
           format="auto"
           className="mt-10"
+          mobileBanner
         />
       )}
     </div>
