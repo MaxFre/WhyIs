@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import TickerSearch from "@/components/TickerSearch";
-import AdSenseLoader from "@/components/AdSenseLoader";
+import AdSlot from "@/components/AdSlot";
 import { getMarketContext } from "@/lib/marketContext";
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   ],
 };
 
-const BASE = "https://www.whyisstock.com";
+const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.whyisstock.com";
 
 // WebSite schema — enables Google sitelinks searchbox
 const websiteSchema = {
@@ -102,7 +102,6 @@ export default async function HomePage() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
-      <AdSenseLoader />
       {/* Hero */}
       <div className="text-center mb-8 sm:mb-10">
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-snug">
@@ -216,6 +215,15 @@ export default async function HomePage() {
           </div>
         ))}
       </section>
+
+      {/* Ad unit — set NEXT_PUBLIC_AD_SLOT_HOMEPAGE in Vercel env vars */}
+      {process.env.NEXT_PUBLIC_AD_SLOT_HOMEPAGE && (
+        <AdSlot
+          slot={process.env.NEXT_PUBLIC_AD_SLOT_HOMEPAGE}
+          format="auto"
+          className="mt-10"
+        />
+      )}
     </div>
   );
 }

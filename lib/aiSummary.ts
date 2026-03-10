@@ -41,10 +41,20 @@ export async function generateAISummary(
     );
   }
 
+  const currSym = (code: string) => {
+    const map: Record<string, string> = {
+      USD: "$", EUR: "€", GBP: "£", SEK: "kr ",
+      JPY: "¥", HKD: "HK$", CAD: "CA$", AUD: "A$",
+      INR: "₹", CNY: "¥",
+    };
+    return map[code] ?? `${code} `;
+  };
+  const sym = currSym(quote.currency);
+
   // Summary paragraph
   let summary =
     `${quote.name} (${quote.ticker}) is trading ${magnitudeWord} ${direction}, ` +
-    `at $${quote.price.toFixed(2)} — ${direction} ${absPct}% from yesterday\'s close of $${quote.previousClose.toFixed(2)}. `;
+    `at ${sym}${quote.price.toFixed(2)} — ${direction} ${absPct}% from yesterday\'s close of ${sym}${quote.previousClose.toFixed(2)}. `;
 
   if (news.length > 0) {
     const topHeadlines = news.slice(0, 2).map((n) => `"${n.headline}"`).join(" and ");

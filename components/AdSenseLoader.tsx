@@ -9,7 +9,7 @@ function loadAdSense() {
   s.async = true;
   s.crossOrigin = "anonymous";
   s.src =
-    "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3379757990050247";
+    `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "ca-pub-3379757990050247"}`;
   document.head.appendChild(s);
 }
 

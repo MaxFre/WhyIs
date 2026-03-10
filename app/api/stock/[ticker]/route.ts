@@ -20,6 +20,12 @@ export async function GET(
 ) {
   const ticker = params.ticker.toUpperCase();
 
+  const validUS = /^[A-Z0-9]{1,5}$/.test(ticker);
+  const validIntl = /^[A-Z0-9][A-Z0-9\-\.]{0,9}\.(ST|T|L|HK|NS|BO|SS|SZ|PA|DE|AX|TO|V|CO|OL|HE|AS|MI|MC|LS|BR|VX)$/.test(ticker);
+  if (!validUS && !validIntl) {
+    return NextResponse.json({ error: "Invalid ticker" }, { status: 400 });
+  }
+
   try {
     // Fetch quote first — fail fast if ticker invalid
     const quote = await getStockQuote(ticker);

@@ -13,7 +13,7 @@ export default function ContactPage() {
     const body = encodeURIComponent(
       `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`
     );
-    window.location.href = `mailto:mafrg@live.se?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:contact@whyisstock.com?subject=${subject}&body=${body}`;
   };
 
   return (

@@ -14,9 +14,12 @@ export default function StockChart({ candles, changePercent }: Props) {
   useEffect(() => {
     if (!containerRef.current || candles.length === 0) return;
 
-    let chart: ReturnType<typeof import("lightweight-charts")["createChart"]>;
+    let chart: ReturnType<typeof import("lightweight-charts")["createChart"]> | undefined;
+    let handleResize: (() => void) | undefined;
+    let cancelled = false;
 
     import("lightweight-charts").then(({ createChart, LineStyle }) => {
+      if (cancelled || !containerRef.current) return;
       const isUp = changePercent >= 0;
       const upColor   = "#22c55e";
       const downColor = "#ef4444";
@@ -65,16 +68,17 @@ export default function StockChart({ candles, changePercent }: Props) {
       areaSeries.setData(data);
       chart.timeScale().fitContent();
 
-      const handleResize = () => {
+      handleResize = () => {
         if (containerRef.current) {
-          chart.applyOptions({ width: containerRef.current.clientWidth });
+          chart!.applyOptions({ width: containerRef.current.clientWidth });
         }
       };
       window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
     });
 
     return () => {
+      cancelled = true;
+      if (handleResize) window.removeEventListener("resize", handleResize);
       chart?.remove();
     };
   }, [candles, changePercent]);

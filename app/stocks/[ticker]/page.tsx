@@ -15,7 +15,7 @@ import MarketContextCard from "@/components/MarketContextCard";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import RefreshButton from "@/components/RefreshButton";
 import TickerSearch from "@/components/TickerSearch";
-import AdSenseLoader from "@/components/AdSenseLoader";
+import AdSlot from "@/components/AdSlot";
 
 // ISR: revalidate every 15 minutes
 export const revalidate = 900;
@@ -92,7 +92,7 @@ export default async function StockPage({ params }: Props) {
   const direction = quote.changePercent >= 0 ? "up" : "down";
   const absPct = Math.abs(quote.changePercent).toFixed(2);
 
-  const base = "https://www.whyisstock.com";
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.whyisstock.com";
 
   // Structured data (JSON-LD) for SEO — Article + BreadcrumbList
   const jsonLd = [
@@ -141,8 +141,6 @@ export default async function StockPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(block) }}
         />
       ))}
-      <AdSenseLoader />
-
       <div className="mx-auto max-w-6xl px-4 py-10">
         {/* Breadcrumb */}
         <nav className="text-xs text-gray-500 mb-6">
@@ -184,6 +182,14 @@ export default async function StockPage({ params }: Props) {
           {/* Sidebar */}
           <div className="space-y-6">
             <MarketContextCard context={marketContext} />
+
+            {/* Ad unit — set NEXT_PUBLIC_AD_SLOT_SIDEBAR in Vercel env vars */}
+            {process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR && (
+              <AdSlot
+                slot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
+                format="rectangle"
+              />
+            )}
 
             {/* Sidebar search */}
             <div className="card">

@@ -65,8 +65,7 @@ export async function getTickerNews(
 
     cacheSet(cacheKey, articles, TTL.NEWS);
     return articles;
-  } catch (err) {
-    console.warn(`[newsApi] Failed to fetch news for ${ticker}:`, err);
+  } catch {
     return [];
   }
 }

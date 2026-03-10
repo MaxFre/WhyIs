@@ -65,16 +65,16 @@ export async function GET(req: NextRequest) {
   // Yahoo results
   const yfQuotes: any[] = yfRes.quotes ?? [];
   const yfResults: SearchResult[] = yfQuotes
-    .filter((q) => q.quoteType === "EQUITY" || q.quoteType === "ETF")
+    .filter((item) => item.quoteType === "EQUITY" || item.quoteType === "ETF")
     .slice(0, 6)
-    .map((q) => {
-      const ticker: string = q.symbol ?? "";
-      const exchange: string = q.exchDisp ?? q.exchange ?? "";
+    .map((item) => {
+      const ticker: string = item.symbol ?? "";
+      const exchange: string = item.exchDisp ?? item.exchange ?? "";
       return {
         ticker,
-        name: q.longname ?? q.shortname ?? ticker,
+        name: item.longname ?? item.shortname ?? ticker,
         exchange,
-        type: q.quoteType ?? "",
+        type: item.quoteType ?? "",
         flag: getFlag(ticker, exchange),
       };
     })
