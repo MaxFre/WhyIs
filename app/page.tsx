@@ -220,9 +220,9 @@ export default async function HomePage() {
       {process.env.NEXT_PUBLIC_AD_SLOT_HOMEPAGE && (
         <AdSlot
           slot={process.env.NEXT_PUBLIC_AD_SLOT_HOMEPAGE}
+          mobileSlot={process.env.NEXT_PUBLIC_AD_SLOT_MOBILE ?? "6888845819"}
           format="auto"
           className="mt-10"
-          mobileBanner
         />
       )}
     </div>
