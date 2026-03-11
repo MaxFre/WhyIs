@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { getMarketContext } from "@/lib/marketContext";
 import { format } from "date-fns";
 
@@ -9,6 +10,11 @@ export const metadata: Metadata = {
   description:
     "Today's performance of major global market indices — S&P 500, Nasdaq, Dow Jones, Nikkei 225, FTSE 100, DAX, and more. Live sector ETF data and market sentiment.",
   alternates: { canonical: "/markets" },
+  keywords: [
+    "stock market today", "S&P 500 today", "Nasdaq today",
+    "Dow Jones today", "Nikkei 225", "FTSE 100", "DAX performance",
+    "global market indices", "market overview", "sector performance today",
+  ],
 };
 
 const WATCHED_TICKERS = [
@@ -68,7 +74,7 @@ export default async function MarketsPage() {
         </h2>
         <div className="grid sm:grid-cols-2 gap-3">
           {WATCHED_TICKERS.map(({ ticker, name }) => (
-            <a
+            <Link
               key={ticker}
               href={`/stocks/${ticker}`}
               className="card flex items-center justify-between hover:border-gray-600 transition-colors cursor-pointer group"
@@ -82,7 +88,7 @@ export default async function MarketsPage() {
               <span className="text-gray-500 group-hover:text-white transition-colors text-sm">
                 →
               </span>
-            </a>
+            </Link>
           ))}
         </div>
       </section>

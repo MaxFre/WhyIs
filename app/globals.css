@@ -25,3 +25,18 @@
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-500/15 text-gray-400;
   }
 }
+
+/* ── Mobile ad constraints ─────────────────────────────────────────────────── */
+/* Prevent AdSense auto-placed ads from dominating mobile viewport            */
+@media (max-width: 639px) {
+  /* Auto-placed ads (no parent .ad-manual wrapper) get a strict height cap */
+  ins.adsbygoogle:not(.ad-manual ins.adsbygoogle) {
+    max-height: 120px !important;
+    overflow: hidden !important;
+  }
+
+  /* Manual placements are allowed to use their natural size */
+  .ad-manual ins.adsbygoogle {
+    max-height: none !important;
+  }
+}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import TickerSearch from "@/components/TickerSearch";
 import AdSlot from "@/components/AdSlot";
 import { getMarketContext } from "@/lib/marketContext";
@@ -87,6 +88,19 @@ const TRENDING = [
   "META", "GOOGL", "NFLX", "AMD", "SPY",
 ];
 
+// ItemList schema — helps Google show trending tickers as a carousel / list
+const trendingListSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Popular Stock Searches",
+  itemListElement: TRENDING.map((ticker, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: `Why is ${ticker} stock up or down today?`,
+    url: `${BASE}/stocks/${ticker}`,
+  })),
+};
+
 export const revalidate = 120;
 
 export default async function HomePage() {
@@ -95,7 +109,7 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 pt-12 sm:pt-20 pb-24 sm:pb-32">
       {/* Structured data */}
-      {[websiteSchema, orgSchema, faqSchema].map((schema, i) => (
+      {[websiteSchema, orgSchema, faqSchema, trendingListSchema].map((schema, i) => (
         <script
           key={i}
           type="application/ld+json"
@@ -178,13 +192,13 @@ export default async function HomePage() {
         </h2>
         <div className="flex flex-wrap gap-2">
           {TRENDING.map((ticker) => (
-            <a
+            <Link
               key={ticker}
               href={`/stocks/${ticker}`}
               className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-sm font-medium text-gray-200 transition-colors border border-gray-700 hover:border-gray-500"
             >
               {ticker}
-            </a>
+            </Link>
           ))}
         </div>
       </section>
@@ -225,6 +239,52 @@ export default async function HomePage() {
           className="mt-10"
         />
       )}
+
+      {/* FAQ — visible section matching JSON-LD schema for double SEO value */}
+      <section className="mt-16">
+        <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
+        <div className="space-y-5">
+          {[
+            {
+              q: "Why is my stock up or down today?",
+              a: "Stock prices move due to breaking news, earnings reports, analyst upgrades or downgrades, sector-wide trends, and broader market movements. WhyIs analyses all of these signals in real time and gives you a plain-English summary for any ticker.",
+            },
+            {
+              q: "How does WhyIs explain stock movements?",
+              a: "WhyIs combines live price data, the latest news headlines, and market context (indices, sector performance) to generate an AI-powered summary that explains what is driving the stock price today.",
+            },
+            {
+              q: "Which stock markets does WhyIs cover?",
+              a: "WhyIs covers stocks from the United States (NYSE, NASDAQ), China (Shanghai, Hong Kong), Japan (TSE), United Kingdom (LSE), India (NSE, BSE), Germany (XETRA, FSE), and Sweden (Nasdaq Stockholm).",
+            },
+            {
+              q: "Is WhyIs stock analysis free?",
+              a: "Yes, WhyIs is completely free. Search any ticker to get an instant AI explanation of today's stock price movement — no account required.",
+            },
+          ].map(({ q, a }) => (
+            <details key={q} className="card group">
+              <summary className="cursor-pointer font-semibold text-white flex items-center justify-between">
+                {q}
+                <span className="text-gray-500 group-open:rotate-45 transition-transform text-lg">+</span>
+              </summary>
+              <p className="mt-3 text-sm text-gray-400 leading-relaxed">{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* SEO-rich footer text */}
+      <section className="mt-16 text-center">
+        <h2 className="text-xl font-semibold mb-3">
+          Instant AI Stock Analysis for Every Investor
+        </h2>
+        <p className="text-sm text-gray-500 max-w-2xl mx-auto leading-relaxed">
+          Whether you&apos;re checking why Tesla is down today, why NVIDIA stock is up after
+          earnings, or what&apos;s moving the S&amp;P 500 — WhyIs gives you the answer in
+          seconds. Search any ticker from the US, Europe, or Asia and get a real-time,
+          AI-generated explanation backed by the latest news and market data.
+        </p>
+      </section>
     </div>
   );
 }

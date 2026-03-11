@@ -16,9 +16,24 @@ import DisclaimerBanner from "@/components/DisclaimerBanner";
 import RefreshButton from "@/components/RefreshButton";
 import TickerSearch from "@/components/TickerSearch";
 import AdSlot from "@/components/AdSlot";
+import Link from "next/link";
 
 // ISR: revalidate every 15 minutes
 export const revalidate = 900;
+
+// Pre-render the most popular tickers at build time for faster crawling
+const POPULAR_TICKERS = [
+  "AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","BRK.B","JPM","V",
+  "UNH","XOM","JNJ","WMT","MA","PG","HD","CVX","MRK","ABBV",
+  "NFLX","AMD","INTC","DIS","CRM","BA","GS","SPY","QQQ","IWM",
+  "SHEL.L","AZN.L","SAP.DE","SIE.DE","7203.T","9984.T",
+  "9988.HK","0700.HK","RELIANCE.NS","TCS.NS",
+  "ERIC-B.ST","VOLV-B.ST",
+];
+
+export async function generateStaticParams() {
+  return POPULAR_TICKERS.map((ticker) => ({ ticker }));
+}
 
 interface Props {
   params: { ticker: string };
@@ -143,8 +158,10 @@ export default async function StockPage({ params }: Props) {
       ))}
       <div className="mx-auto max-w-6xl px-4 py-10">
         {/* Breadcrumb */}
-        <nav className="text-xs text-gray-500 mb-6">
-          <a href="/" className="hover:text-white transition-colors">Home</a>
+        <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-6">
+          <Link href="/" className="hover:text-white transition-colors">Home</Link>
+          <span className="mx-2">/</span>
+          <Link href="/markets" className="hover:text-white transition-colors">Markets</Link>
           <span className="mx-2">/</span>
           <span className="text-gray-300">{ticker}</span>
         </nav>

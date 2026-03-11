@@ -4,12 +4,14 @@ import { useEffect } from "react";
 
 function loadAdSense() {
   if (document.getElementById("adsense-script")) return;
+  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "ca-pub-3379757990050247";
   const s = document.createElement("script");
   s.id = "adsense-script";
   s.async = true;
   s.crossOrigin = "anonymous";
-  s.src =
-    `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "ca-pub-3379757990050247"}`;
+  s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`;
+  // Push anchor / vignette overlays to bottom so they don't cover hero on mobile
+  s.dataset.overlays = "bottom";
   document.head.appendChild(s);
 }
 

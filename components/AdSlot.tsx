@@ -30,7 +30,7 @@ export default function AdSlot({ slot, mobileSlot, format = "auto", className = 
 
   if (isDev) {
     return (
-      <div className={className}>
+      <div className={`ad-manual ${className}`}>
         {mobileSlot && (
           <div className="sm:hidden flex items-center justify-center h-[90px] rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 text-xs text-gray-600">
             Ad (mobile)
@@ -47,7 +47,7 @@ export default function AdSlot({ slot, mobileSlot, format = "auto", className = 
   }
 
   return (
-    <div className={className}>
+    <div className={`ad-manual ${className}`}>
       {mobileSlot && (
         <div className="sm:hidden" style={{ maxHeight: 100, overflow: "hidden" }}>
           <ins
@@ -56,7 +56,7 @@ export default function AdSlot({ slot, mobileSlot, format = "auto", className = 
             data-ad-client={ADSENSE_CLIENT}
             data-ad-slot={mobileSlot}
             data-ad-format="horizontal"
-            data-full-width-responsive="true"
+            data-full-width-responsive="false"
           />
         </div>
       )}
