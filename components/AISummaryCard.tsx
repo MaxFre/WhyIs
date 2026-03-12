@@ -27,13 +27,16 @@ export default function AISummaryCard({ summary, ticker }: Props) {
         )}
       </div>
 
-      <h2 className="text-xl font-bold leading-snug mb-4">{summary.headline}</h2>
+      <h2 className="text-xl font-bold leading-snug mb-3">{summary.headline}</h2>
+
+      {/* Full summary — shown first for easy reading */}
+      <p className="text-sm text-gray-200 leading-relaxed mb-5">{summary.summary}</p>
 
       {/* Key reasons */}
       {summary.keyReasons.length > 0 && (
-        <ul className="mb-5 space-y-2">
+        <ul className="mb-4 space-y-2">
           {summary.keyReasons.map((reason, i) => (
-            <li key={i} className="flex gap-2 text-sm text-gray-300">
+            <li key={i} className="flex gap-2 text-sm text-gray-400">
               <span className="text-green-400 mt-0.5 shrink-0">•</span>
               <span>{reason}</span>
             </li>
@@ -41,10 +44,7 @@ export default function AISummaryCard({ summary, ticker }: Props) {
         </ul>
       )}
 
-      {/* Full summary */}
-      <p className="text-sm text-gray-400 leading-relaxed">{summary.summary}</p>
-
-      <p className="text-xs text-gray-600 mt-4">
+      <p className="text-xs text-gray-600 mt-2">
         Auto-generated · {timeAgo}
       </p>
     </div>
