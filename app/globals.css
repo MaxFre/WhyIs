@@ -7,7 +7,13 @@
     @apply scroll-smooth;
   }
   body {
-    @apply bg-gray-950 text-gray-100 antialiased;
+    @apply text-gray-100 antialiased;
+    background-image: url('/darkTheme.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-color: #030712; /* fallback */
   }
 }
 
