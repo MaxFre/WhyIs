@@ -32,6 +32,25 @@
   }
 }
 
+/* ── Movers banner ticker scroll ──────────────────────────────────────────── */
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-ticker-scroll {
+  animation: ticker-scroll 28s linear infinite;
+  white-space: nowrap;
+  will-change: transform;
+}
+.animate-ticker-scroll:hover {
+  animation-play-state: paused;
+}.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 /* ── Mobile ad constraints ─────────────────────────────────────────────────── */
 /* Prevent AdSense auto-placed ads from dominating mobile viewport            */
 @media (max-width: 639px) {

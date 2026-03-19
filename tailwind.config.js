@@ -20,6 +20,15 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
+      animation: {
+        "ticker-scroll": "ticker-scroll 28s linear infinite",
+      },
+      keyframes: {
+        "ticker-scroll": {
+          "0%":   { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+      },
     },
   },
   plugins: [],

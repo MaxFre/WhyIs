@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import TickerSearch from "@/components/TickerSearch";
+import MoversBanner from "@/components/MoversBanner";
 import AdSlot from "@/components/AdSlot";
 import { getMarketContext } from "@/lib/marketContext";
 
@@ -133,28 +134,58 @@ export default async function HomePage() {
         </p>
       </div>
 
-      {/* Markets covered — compact, above search */}
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-6 text-xs text-gray-500">
-        <span className="uppercase tracking-widest font-semibold text-gray-600 mr-1">Markets:</span>
-        {[
-          { flag: "🇺🇸", label: "US" },
-          { flag: "🇨🇳", label: "CN" },
-          { flag: "🇯🇵", label: "JP" },
-          { flag: "🇬🇧", label: "UK" },
-          { flag: "🇮🇳", label: "IN" },
-          { flag: "🇩🇪", label: "DE" },
-          { flag: "🇸🇪", label: "SE" },
-        ].map(({ flag, label }) => (
-          <span key={label} className="inline-flex items-center gap-1">
-            <span>{flag}</span>
-            <span>{label}</span>
-          </span>
-        ))}
-      </div>
+      {/* Popular searches */}
+      <section className="mb-5">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">
+          Popular searches
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {TRENDING.map((ticker) => (
+            <Link
+              key={ticker}
+              href={`/stocks/${ticker}`}
+              className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-sm font-medium text-gray-200 transition-colors border border-gray-700 hover:border-gray-500"
+            >
+              {ticker}
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* Search */}
-      <div className="mb-10">
+      <div className="mb-6">
         <TickerSearch />
+      </div>
+
+      {/* Best / Worst today banner */}
+      <div className="mb-10">
+        <MoversBanner />
+      </div>
+
+      {/* Markets we cover */}
+      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mb-8 text-xs text-gray-400">
+        <span className="uppercase tracking-widest font-semibold text-gray-500">Markets we cover:</span>
+        {[
+          { code: "us", label: "US" },
+          { code: "cn", label: "CN" },
+          { code: "jp", label: "JP" },
+          { code: "gb", label: "UK" },
+          { code: "in", label: "IN" },
+          { code: "de", label: "DE" },
+          { code: "se", label: "SE" },
+        ].map(({ code, label }) => (
+          <span key={label} className="inline-flex items-center gap-1.5">
+            <img
+              src={`https://flagcdn.com/20x15/${code}.png`}
+              srcSet={`https://flagcdn.com/40x30/${code}.png 2x`}
+              width={20}
+              height={15}
+              alt={label}
+              className="rounded-sm"
+            />
+            <span className="font-medium">{label}</span>
+          </span>
+        ))}
       </div>
 
       {/* Major Indices */}
@@ -185,24 +216,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Trending */}
-      <section>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">
-          Popular searches
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {TRENDING.map((ticker) => (
-            <Link
-              key={ticker}
-              href={`/stocks/${ticker}`}
-              className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-sm font-medium text-gray-200 transition-colors border border-gray-700 hover:border-gray-500"
-            >
-              {ticker}
-            </Link>
-          ))}
-        </div>
-      </section>
-
       {/* Feature cards */}
       <section className="mt-12 grid sm:grid-cols-3 gap-5">
         {[
@@ -230,14 +243,11 @@ export default async function HomePage() {
         ))}
       </section>
 
-      {/* Ad unit — set NEXT_PUBLIC_AD_SLOT_HOMEPAGE in Vercel env vars */}
-      {process.env.NEXT_PUBLIC_AD_SLOT_HOMEPAGE && (
-        <AdSlot
-          slot={process.env.NEXT_PUBLIC_AD_SLOT_HOMEPAGE}
-          mobileSlot={process.env.NEXT_PUBLIC_AD_SLOT_MOBILE ?? "6888845819"}
-          format="auto"
-          className="mt-10"
-        />
+      {/* Ad unit */}
+      {process.env.NEXT_PUBLIC_AD_SLOT_HOME && (
+        <div className="my-8">
+          <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_HOME} format="auto" />
+        </div>
       )}
 
       {/* FAQ — visible section matching JSON-LD schema for double SEO value */}

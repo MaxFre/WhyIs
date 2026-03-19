@@ -15,6 +15,7 @@ import MarketContextCard from "@/components/MarketContextCard";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import RefreshButton from "@/components/RefreshButton";
 import TickerSearch from "@/components/TickerSearch";
+import MarketMovers from "@/components/MarketMovers";
 import AdSlot from "@/components/AdSlot";
 import Link from "next/link";
 
@@ -217,6 +218,9 @@ export default async function StockPage({ params }: Props) {
               </p>
               <TickerSearch />
             </div>
+
+            {/* Market movers */}
+            <MarketMovers exchange={quote.exchange} ticker={ticker} />
 
 
           </div>
