@@ -25,9 +25,10 @@ export default function StockChart({ candles, changePercent }: Props) {
       const downColor = "#ef4444";
       const lineColor = isUp ? upColor : downColor;
 
+      const isMobile = containerRef.current!.clientWidth < 640;
       chart = createChart(containerRef.current!, {
         width: containerRef.current!.clientWidth,
-        height: 260,
+        height: isMobile ? 180 : 260,
         layout: {
           background: { color: "transparent" },
           textColor: "#6b7280",
@@ -85,7 +86,7 @@ export default function StockChart({ candles, changePercent }: Props) {
 
   if (candles.length === 0) {
     return (
-      <div className="card flex items-center justify-center h-[260px] text-gray-600 text-sm">
+      <div className="card flex items-center justify-center h-[180px] sm:h-[260px] text-gray-600 text-sm">
         Chart data unavailable
       </div>
     );

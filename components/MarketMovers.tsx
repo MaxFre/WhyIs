@@ -186,7 +186,7 @@ export default function MarketMovers({ exchange, ticker }: Props) {
                 >
                   {item.ticker}
                 </span>
-                <span className="text-[11px] text-gray-500 leading-tight truncate">
+                <span className="text-xs text-gray-500 leading-tight truncate">
                   {item.name}
                 </span>
               </div>

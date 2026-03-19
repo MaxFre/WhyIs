@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Link from "next/link";
 import CookieConsent from "@/components/CookieConsent";
-import AdSenseLoader from "@/components/AdSenseLoader";
+// import AdSenseLoader from "@/components/AdSenseLoader";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -50,14 +50,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <head>
-        <meta name="google-adsense-account" content={process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "ca-pub-3379757990050247"} />
+        {/* <meta name="google-adsense-account" content={process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "ca-pub-3379757990050247"} /> */}
       </head>
       <body>
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />
         <CookieConsent />
-        <AdSenseLoader />
+        {/* <AdSenseLoader /> */}
         <Analytics />
       </body>
     </html>

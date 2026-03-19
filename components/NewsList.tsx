@@ -74,7 +74,7 @@ export default function NewsList({ articles }: Props) {
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium leading-snug text-gray-200 group-hover:text-white transition-colors line-clamp-2">
+                  <p className="text-sm font-medium leading-snug text-gray-200 group-hover:text-white transition-colors line-clamp-2 break-words">
                     {article.headline}
                   </p>
                   <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">

@@ -16,7 +16,7 @@ import DisclaimerBanner from "@/components/DisclaimerBanner";
 import RefreshButton from "@/components/RefreshButton";
 import TickerSearch from "@/components/TickerSearch";
 import MarketMovers from "@/components/MarketMovers";
-import AdSlot from "@/components/AdSlot";
+// import AdSlot from "@/components/AdSlot";
 import Link from "next/link";
 
 // ISR: revalidate every 15 minutes
@@ -201,7 +201,7 @@ export default async function StockPage({ params }: Props) {
           <div className="space-y-6">
             <MarketContextCard context={marketContext} />
 
-            {/* Ad unit — set NEXT_PUBLIC_AD_SLOT_SIDEBAR in Vercel env vars */}
+            {/* Ad unit — commented out for now
             {process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR && (
               <div className="hidden lg:block">
                 <AdSlot
@@ -210,6 +210,7 @@ export default async function StockPage({ params }: Props) {
                 />
               </div>
             )}
+            */}
 
             {/* Sidebar search */}
             <div className="card">

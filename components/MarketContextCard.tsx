@@ -27,7 +27,7 @@ export default function MarketContextCard({ context }: Props) {
       </div>
 
       {/* Major indices */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
         {context.indices.map((idx) => {
           const up = idx.changePercent >= 0;
           return (
@@ -49,7 +49,7 @@ export default function MarketContextCard({ context }: Props) {
 
       {/* Sector */}
       {context.sectorPerf && (
-        <div className="flex items-center justify-between border-t border-gray-800 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-800 pt-4">
           <p className="text-xs text-gray-500">
             Sector: <span className="text-gray-300">{context.sectorPerf.sector}</span>
           </p>

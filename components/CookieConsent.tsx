@@ -25,7 +25,7 @@ export default function CookieConsent() {
 
   return (
     <div className="fixed bottom-0 inset-x-0 z-[60] p-4 sm:p-6">
-      <div className="mx-auto max-w-xl bg-gray-800 border border-gray-700 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div className="mx-auto max-w-none sm:max-w-xl bg-gray-800 border border-gray-700 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <p className="text-sm text-gray-300 flex-1">
           We use cookies for analytics and to serve ads via Google AdSense.
           See our{" "}
@@ -34,16 +34,16 @@ export default function CookieConsent() {
           </a>{" "}
           for details.
         </p>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 w-full sm:w-auto">
           <button
             onClick={decline}
-            className="px-4 py-2 text-sm text-gray-400 hover:text-white border border-gray-600 rounded-xl transition-colors"
+            className="flex-1 sm:flex-none px-4 py-2 text-sm text-gray-400 hover:text-white border border-gray-600 rounded-xl transition-colors"
           >
             Decline
           </button>
           <button
             onClick={accept}
-            className="px-4 py-2 text-sm font-semibold bg-green-500 hover:bg-green-400 text-black rounded-xl transition-colors"
+            className="flex-1 sm:flex-none px-4 py-2 text-sm font-semibold bg-green-500 hover:bg-green-400 text-black rounded-xl transition-colors"
           >
             Accept
           </button>

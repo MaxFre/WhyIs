@@ -28,9 +28,9 @@ export default function PriceHeader({ quote }: Props) {
   return (
     <div className="card">
       {/* Company name + ticker */}
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-        <div>
-          <h2 className="text-2xl font-bold">{quote.name}</h2>
+      <div className="flex flex-col sm:flex-row flex-wrap items-start justify-between gap-2 sm:gap-3 mb-4">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold break-words">{quote.name}</h2>
           <p className="text-gray-500 text-sm mt-0.5">
             {quote.ticker} · {quote.exchange} · {quote.currency}
           </p>
@@ -48,15 +48,15 @@ export default function PriceHeader({ quote }: Props) {
       </div>
 
       {/* Price row */}
-      <div className="flex flex-wrap items-end gap-4">
-        <span className="text-5xl font-extrabold tabular-nums">
+      <div className="flex flex-wrap items-end gap-3 sm:gap-4">
+        <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold tabular-nums">
           {currencySymbol(quote.currency)}
           {fmt(quote.price)}
         </span>
         <div className="mb-1.5">
           <span
             className={clsx(
-              "text-xl font-bold",
+              "text-base sm:text-xl font-bold",
               isUp ? "text-green-400" : "text-red-400"
             )}
           >

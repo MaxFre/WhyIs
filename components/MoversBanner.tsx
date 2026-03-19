@@ -176,12 +176,12 @@ export default function MoversBanner() {
         className="relative bg-gray-950 border border-gray-800 rounded-2xl overflow-hidden select-none touch-pan-y"
       >
         {/* Fade edges */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-gray-950 to-transparent z-20" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-gray-950 to-transparent z-20" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-6 sm:w-12 bg-gradient-to-r from-gray-950 to-transparent z-20" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 sm:w-12 bg-gradient-to-l from-gray-950 to-transparent z-20" />
 
         <div className="flex items-stretch">
           {/* Static label with market dropdown */}
-          <div className="shrink-0 flex flex-col items-center justify-center px-4 py-3 bg-gray-900/80 border-r border-gray-800 z-30 gap-0.5">
+          <div className="shrink-0 flex flex-col items-center justify-center px-2 sm:px-4 py-2 sm:py-3 bg-gray-900/80 border-r border-gray-800 z-30 gap-0.5">
             <span className="text-[11px] font-black uppercase tracking-widest text-green-400 leading-none">
               Top 5
             </span>
@@ -233,25 +233,25 @@ export default function MoversBanner() {
                   onClick={(e) => { if (state.current.hasMoved) { e.preventDefault(); e.stopPropagation(); } }}
                   draggable={false}
                   onDragStart={(e) => e.preventDefault()}
-                  className={`shrink-0 flex items-center gap-3 mx-1 px-4 py-2 rounded-xl transition-all duration-200
+                  className={`shrink-0 flex items-center gap-2 sm:gap-3 mx-1 px-2 sm:px-4 py-2 rounded-xl transition-all duration-200
                     ${up ? "hover:bg-green-500/10" : "hover:bg-red-500/10"}
                     ${isTop ? "ring-1 ring-green-500/20 bg-green-500/5" : ""}
                     ${isBottom ? "ring-1 ring-red-500/20 bg-red-500/5" : ""}
                   `}
                 >
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold
+                  <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-lg text-xs sm:text-sm font-bold
                     ${up ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}`}>
                     {up ? "▲" : "▼"}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className={`text-sm font-bold leading-tight ${up ? "text-green-400" : "text-red-400"}`}>
+                    <span className={`text-xs sm:text-sm font-bold leading-tight ${up ? "text-green-400" : "text-red-400"}`}>
                       {item.ticker}
                     </span>
-                    <span className="text-[11px] text-gray-500 leading-tight truncate max-w-[80px]">
+                    <span className="text-[11px] text-gray-500 leading-tight truncate max-w-[60px] sm:max-w-[80px]">
                       {item.name}
                     </span>
                   </div>
-                  <div className={`ml-1 px-2 py-0.5 rounded-md text-xs font-bold tabular-nums whitespace-nowrap
+                  <div className={`ml-1 px-1.5 sm:px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-bold tabular-nums whitespace-nowrap
                     ${up ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}`}>
                     {up ? "+" : "-"}{pct.toFixed(2)}%
                   </div>

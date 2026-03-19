@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import TickerSearch from "@/components/TickerSearch";
 import MoversBanner from "@/components/MoversBanner";
-import AdSlot from "@/components/AdSlot";
+// import AdSlot from "@/components/AdSlot";
 import { getMarketContext } from "@/lib/marketContext";
 
 export const metadata: Metadata = {
@@ -119,7 +119,7 @@ export default async function HomePage() {
       ))}
       {/* Hero */}
       <div className="text-center mb-8 sm:mb-10">
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-5 leading-snug">
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight mb-5 leading-snug">
           Why is{" "}
           <span className="text-green-400">[stock]</span>
           <br />
@@ -243,12 +243,13 @@ export default async function HomePage() {
         ))}
       </section>
 
-      {/* Ad unit */}
+      {/* Ad unit — commented out for now
       {process.env.NEXT_PUBLIC_AD_SLOT_HOME && (
         <div className="my-8">
           <AdSlot slot={process.env.NEXT_PUBLIC_AD_SLOT_HOME} format="auto" />
         </div>
       )}
+      */}
 
       {/* FAQ — visible section matching JSON-LD schema for double SEO value */}
       <section className="mt-16">

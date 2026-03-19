@@ -114,7 +114,7 @@ export default function TickerSearch() {
         <button
           type="button"
           onClick={doSearch}
-          className="shrink-0 px-5 py-3 bg-green-500 hover:bg-green-400 text-black font-semibold rounded-2xl text-sm transition-colors"
+          className="shrink-0 px-3 sm:px-5 py-3 bg-green-500 hover:bg-green-400 text-black font-semibold rounded-2xl text-sm transition-colors"
         >
           Search
         </button>
