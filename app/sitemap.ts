@@ -1,5 +1,20 @@
 import { MetadataRoute } from "next";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.whyisstock.com";
+
+const STATIC_ROUTES: Array<{
+  path: string;
+  changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
+  priority: number;
+}> = [
+  { path: "", changeFrequency: "hourly", priority: 1.0 },
+  { path: "/markets", changeFrequency: "hourly", priority: 0.8 },
+  { path: "/about", changeFrequency: "monthly", priority: 0.5 },
+  { path: "/contact", changeFrequency: "monthly", priority: 0.4 },
+  { path: "/privacy", changeFrequency: "yearly", priority: 0.2 },
+  { path: "/terms", changeFrequency: "yearly", priority: 0.2 },
+];
+
 // Top US tickers (expanded)
 const US_TICKERS = [
   "AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","BRK.B","JPM","V",
@@ -32,53 +47,22 @@ const INTL_TICKERS = [
 const ALL_TICKERS = [...US_TICKERS, ...INTL_TICKERS];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.whyisstock.com";
   const now = new Date();
 
   const stockEntries: MetadataRoute.Sitemap = ALL_TICKERS.map((ticker) => ({
-    url: `${base}/stocks/${ticker}`,
+    url: `${BASE_URL}/stocks/${ticker}`,
     lastModified: now,
     changeFrequency: "hourly",
     priority: 0.8,
   }));
 
   return [
-    {
-      url: base,
+    ...STATIC_ROUTES.map((route) => ({
+      url: `${BASE_URL}${route.path}`,
       lastModified: now,
-      changeFrequency: "hourly",
-      priority: 1.0,
-    },
-    {
-      url: `${base}/contact`,
-      lastModified: now,
-      changeFrequency: "monthly" as const,
-      priority: 0.4,
-    },
-    {
-      url: `${base}/about`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-    {
-      url: `${base}/privacy`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.3,
-    },
-    {
-      url: `${base}/terms`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.3,
-    },
-    {
-      url: `${base}/markets`,
-      lastModified: now,
-      changeFrequency: "hourly",
-      priority: 0.7,
-    },
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
+    })),
     ...stockEntries,
   ];
 }

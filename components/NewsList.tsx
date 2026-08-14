@@ -1,7 +1,7 @@
 import { NewsArticle } from "@/types";
 import { formatDistanceToNow } from "date-fns";
-import Image from "next/image";
 import clsx from "clsx";
+import NewsThumbnail from "@/components/NewsThumbnail";
 
 interface Props {
   articles: NewsArticle[];
@@ -65,13 +65,7 @@ export default function NewsList({ articles }: Props) {
             >
               <div className="flex items-start gap-3">
                 {article.image && (
-                  <Image
-                    src={article.image}
-                    alt=""
-                    width={64}
-                    height={48}
-                    className="object-cover rounded-lg shrink-0 opacity-80"
-                  />
+                  <NewsThumbnail src={article.image} />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium leading-snug text-gray-200 group-hover:text-white transition-colors line-clamp-2 break-words">

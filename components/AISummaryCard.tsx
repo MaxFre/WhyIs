@@ -89,6 +89,12 @@ export default function AISummaryCard({ summary, ticker }: Props) {
 
 /** Split a long summary into ~2-3 paragraphs for readability */
 function splitIntoParagraphs(text: string): string[] {
+  const explicitParagraphs = text
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  if (explicitParagraphs.length > 1) return explicitParagraphs;
+
   const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
   if (sentences.length <= 3) return [text];
 
