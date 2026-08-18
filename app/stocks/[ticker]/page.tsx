@@ -19,8 +19,8 @@ import MarketMovers from "@/components/MarketMovers";
 // import AdSlot from "@/components/AdSlot";
 import Link from "next/link";
 
-// ISR: revalidate every 15 minutes
-export const revalidate = 900;
+// ISR: revalidate hourly to reduce Vercel ISR writes from crawler/user traffic.
+export const revalidate = 3600;
 
 // Pre-render the most popular tickers at build time for faster crawling
 const POPULAR_TICKERS = [

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getMarketContext } from "@/lib/marketContext";
 import { format } from "date-fns";
 
-export const revalidate = 120;
+export const revalidate = 900;
 
 export const metadata: Metadata = {
   title: "Market Overview — Global Indices & Sectors Today",

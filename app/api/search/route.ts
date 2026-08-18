@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
   const [yfRes, avanzaHits] = await Promise.all([
     fetch(`${YF_SEARCH}&q=${encodeURIComponent(q)}`, {
       headers: HEADERS,
-      next: { revalidate: 60 },
+      next: { revalidate: 3600 },
     }).then((r) => r.ok ? r.json() : { quotes: [] }).catch(() => ({ quotes: [] })),
     searchAvanza(q).catch(() => []),
   ]);

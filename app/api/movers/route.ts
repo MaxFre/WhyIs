@@ -82,7 +82,7 @@ function resolveMarket(exchange: string, ticker: string): string {
   return "us";
 }
 
-export const revalidate = 300;
+export const revalidate = 900;
 
 interface MoverResult {
   ticker: string;
@@ -95,7 +95,7 @@ async function fetchTicker(ticker: string, nameMap: Record<string, string>): Pro
   try {
     const res = await fetch(
       `${YF}/v8/finance/chart/${ticker}?interval=1d&range=1d&includePrePost=false`,
-      { headers: HEADERS, next: { revalidate: 300 } }
+      { headers: HEADERS, next: { revalidate: 900 } }
     );
     if (!res.ok) return null;
     const data = await res.json();

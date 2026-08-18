@@ -12,7 +12,7 @@ import { generateAISummary } from "@/lib/aiSummary";
 import { StockPageData } from "@/types";
 
 export const runtime = "nodejs";
-export const revalidate = 60; // ISR 1 min
+export const revalidate = 300;
 
 export async function GET(
   _req: NextRequest,
@@ -50,7 +50,7 @@ export async function GET(
 
     return NextResponse.json(payload, {
       headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
       },
     });
   } catch (err: unknown) {

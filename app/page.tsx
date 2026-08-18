@@ -102,7 +102,7 @@ const trendingListSchema = {
   })),
 };
 
-export const revalidate = 120;
+export const revalidate = 900;
 
 export default async function HomePage() {
   const context = await getMarketContext();
