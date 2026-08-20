@@ -102,10 +102,45 @@ const trendingListSchema = {
   })),
 };
 
+function formatPercent(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function getPulseCopy(sentiment: "risk-on" | "risk-off" | "neutral", averageChange: number) {
+  if (sentiment === "risk-on") {
+    return `Global indices are leaning positive today, with the broad market up ${formatPercent(averageChange)} on average.`;
+  }
+
+  if (sentiment === "risk-off") {
+    return `Markets are defensive today, with the broad index basket down ${formatPercent(averageChange)} on average.`;
+  }
+
+  return `Markets are mixed today, with the broad index basket close to flat at ${formatPercent(averageChange)} on average.`;
+}
+
 export const revalidate = 900;
 
 export default async function HomePage() {
   const context = await getMarketContext();
+  const sortedIndices = [...context.indices].sort((a, b) => b.changePercent - a.changePercent);
+  const strongestIndex = sortedIndices[0];
+  const weakestIndex = sortedIndices[sortedIndices.length - 1];
+  const averageIndexChange = context.indices.length
+    ? context.indices.reduce((sum, idx) => sum + idx.changePercent, 0) / context.indices.length
+    : 0;
+  const positiveMarkets = context.indices.filter((idx) => idx.changePercent > 0).length;
+  const pulseTone =
+    context.marketSentiment === "risk-on"
+      ? "text-green-400 bg-green-500/10 border-green-500/20"
+      : context.marketSentiment === "risk-off"
+        ? "text-red-400 bg-red-500/10 border-red-500/20"
+        : "text-gray-300 bg-gray-500/10 border-gray-500/20";
+  const pulseLabel =
+    context.marketSentiment === "risk-on"
+      ? "Risk-on"
+      : context.marketSentiment === "risk-off"
+        ? "Risk-off"
+        : "Mixed";
 
   return (
     <div className="mx-auto max-w-4xl px-4 pt-12 sm:pt-20 pb-24 sm:pb-32">
@@ -134,31 +169,90 @@ export default async function HomePage() {
         </p>
       </div>
 
-      {/* Popular searches */}
-      <section className="mb-5">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">
-          Popular searches
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {TRENDING.map((ticker) => (
-            <Link
-              key={ticker}
-              href={`/stocks/${ticker}`}
-              className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-sm font-medium text-gray-200 transition-colors border border-gray-700 hover:border-gray-500"
-            >
-              {ticker}
-            </Link>
-          ))}
+      <div className="relative mb-10">
+        {/* Today's Market Pulse */}
+        <section className="mb-6 rounded-2xl border border-gray-800 bg-gray-950/80 p-5 text-left shadow-2xl shadow-black/20 sm:p-6 xl:absolute xl:left-[calc(100%+0.75rem)] xl:top-0 xl:mb-0 xl:w-[300px]">
+          <div className="mb-5 flex flex-col gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-2">
+                Today&apos;s Market Pulse
+              </p>
+              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
+                {getPulseCopy(context.marketSentiment, averageIndexChange)}
+              </h2>
+            </div>
+            <span className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-widest ${pulseTone}`}>
+              {pulseLabel}
+            </span>
+          </div>
+
+          <div className="grid gap-3">
+            <div className="rounded-xl border border-gray-800 bg-gray-900/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">Markets Up</p>
+              <p className="mt-2 text-2xl font-bold text-white tabular-nums">
+                {positiveMarkets} of {context.indices.length}
+              </p>
+              <p className="mt-1 text-sm text-gray-400">major indices are up today</p>
+            </div>
+
+            {strongestIndex && (
+              <Link
+                href="/markets"
+                className="rounded-xl border border-gray-800 bg-gray-900/70 p-4 transition-colors hover:border-green-500/50 hover:bg-gray-900"
+              >
+                <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">Strongest</p>
+                <div className="mt-2 flex items-baseline justify-between gap-3">
+                  <p className="font-semibold text-white">{strongestIndex.name}</p>
+                  <p className="text-xl font-bold text-green-400 tabular-nums">
+                    {formatPercent(strongestIndex.changePercent)}
+                  </p>
+                </div>
+                <p className="mt-1 text-sm text-gray-400">leading today&apos;s index tape</p>
+              </Link>
+            )}
+
+            {weakestIndex && (
+              <Link
+                href="/markets"
+                className="rounded-xl border border-gray-800 bg-gray-900/70 p-4 transition-colors hover:border-red-500/50 hover:bg-gray-900"
+              >
+                <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">Weakest</p>
+                <div className="mt-2 flex items-baseline justify-between gap-3">
+                  <p className="font-semibold text-white">{weakestIndex.name}</p>
+                  <p className={`text-xl font-bold tabular-nums ${weakestIndex.changePercent >= 0 ? "text-green-400" : "text-red-400"}`}>
+                    {formatPercent(weakestIndex.changePercent)}
+                  </p>
+                </div>
+                <p className="mt-1 text-sm text-gray-400">lagging the global basket</p>
+              </Link>
+            )}
+          </div>
+        </section>
+
+        {/* Popular searches */}
+        <section className="mb-5">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">
+            Popular searches
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {TRENDING.map((ticker) => (
+              <Link
+                key={ticker}
+                href={`/stocks/${ticker}`}
+                className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-sm font-medium text-gray-200 transition-colors border border-gray-700 hover:border-gray-500"
+              >
+                {ticker}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Search */}
+        <div className="mb-6">
+          <TickerSearch />
         </div>
-      </section>
 
-      {/* Search */}
-      <div className="mb-6">
-        <TickerSearch />
-      </div>
-
-      {/* Best / Worst today banner */}
-      <div className="mb-10">
+        {/* Best / Worst today banner */}
         <MoversBanner />
       </div>
 
