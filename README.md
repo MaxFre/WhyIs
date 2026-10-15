@@ -16,7 +16,7 @@ A scalable, automated SEO website that explains daily stock price movements for 
 | **Market context** | S&P 500, Nasdaq, DJIA + sector ETF performance |
 | **ISR caching** | Pages revalidate every 15 min; quotes cached 1 min |
 | **SEO-optimised** | Dynamic meta titles, OG tags, JSON-LD, sitemap, robots.txt |
-| **Ad slots** | Placeholder components ready for AdSense integration |
+| **Ad slots** | Consent-gated AdSense with local preview placeholders |
 | **Affiliate slots** | Broker link placeholder in sidebar |
 
 ---
@@ -137,7 +137,7 @@ For production, replace the in-process cache in `lib/cache.ts` with **Redis** or
 
 ## Monetisation
 
-1. **Display ads** — Swap `AdSlot` components with real AdSense `<ins>` tags
+1. **Display ads** — AdSense banner below the homepage indices and a rectangle below stock market context. Set `NEXT_PUBLIC_AD_SLOT_HOME` and `NEXT_PUBLIC_AD_SLOT_SIDEBAR` to real ad unit IDs from AdSense, and verify `NEXT_PUBLIC_ADSENSE_CLIENT`. Blank slots are omitted in production. Development always shows previews without loading Google ads. The production script and ad requests wait for cookie consent; configure Auto ads in AdSense separately to avoid unwanted additional placements. Rebuild after changing these public environment variables.
 2. **Affiliate brokers** — Update the broker link in the sidebar (`stocks/[ticker]/page.tsx`)
 3. **Premium tier** — Add auth + gate the AI summary behind a subscription
 

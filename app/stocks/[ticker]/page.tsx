@@ -16,7 +16,7 @@ import DisclaimerBanner from "@/components/DisclaimerBanner";
 import RefreshButton from "@/components/RefreshButton";
 import TickerSearch from "@/components/TickerSearch";
 import MarketMovers from "@/components/MarketMovers";
-// import AdSlot from "@/components/AdSlot";
+import AdSlot from "@/components/AdSlot";
 import Link from "next/link";
 
 // ISR: revalidate hourly to reduce Vercel ISR writes from crawler/user traffic.
@@ -187,9 +187,9 @@ export default async function StockPage({ params }: Props) {
         </div>
 
         {/* Two-column layout */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main column */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="min-w-0 lg:col-span-2 space-y-6">
             <PriceHeader quote={quote} />
             <StockChart candles={candles} changePercent={quote.changePercent} />
             <AISummaryCard summary={aiSummary} ticker={ticker} />
@@ -198,19 +198,13 @@ export default async function StockPage({ params }: Props) {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <MarketContextCard context={marketContext} />
 
-            {/* Ad unit — commented out for now
-            {process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR && (
-              <div className="hidden lg:block">
-                <AdSlot
-                  slot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
-                  format="rectangle"
-                />
-              </div>
-            )}
-            */}
+            <AdSlot
+              slot={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR}
+              format="rectangle"
+            />
 
             {/* Sidebar search */}
             <div className="card">

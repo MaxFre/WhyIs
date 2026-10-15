@@ -1,294 +1,250 @@
-/**
- * Rule-based market summary — no API key required.
- * Generates a plain-English explanation from quote, news, and market context.
- */
-
-import { AISummaryResult, MarketContext, NewsArticle, StockQuote } from "@/types";
+import { AISummaryResult, IndexQuote, MarketContext, NewsArticle, StockQuote } from "@/types";
 import { cacheGet, cacheSet, TTL } from "./cache";
+
+interface Catalyst {
+  article: NewsArticle;
+  category: string;
+  mechanism: string;
+  tone: "positive" | "negative" | "neutral";
+}
 
 export async function generateAISummary(
   quote: StockQuote,
   news: NewsArticle[],
   marketCtx: MarketContext
 ): Promise<AISummaryResult> {
-  const cacheKey = `summary:${quote.ticker}`;
-  const cached = cacheGet<AISummaryResult>(cacheKey);
-  if (cached) return { ...cached, cached: true };
+  const cacheKey = `summary:v2:${quote.ticker}`;
+  const signature = JSON.stringify([quote, news, marketCtx]);
+  const cached = cacheGet<{ signature: string; result: AISummaryResult }>(cacheKey);
+  if (cached?.signature === signature) return { ...cached.result, cached: true };
 
-  const up = quote.changePercent >= 0;
-  const direction = up ? "up" : "down";
-  const absPct = Math.abs(quote.changePercent).toFixed(2);
-  const pctNum = parseFloat(absPct);
-  const summaryDate = new Date(quote.timestamp || Date.now()).toISOString().slice(0, 10);
-  const seed = hashText(`${quote.ticker}:${summaryDate}:${direction}:${Math.round(pctNum)}`);
+  const quoteTime = Number.isFinite(quote.timestamp) && quote.timestamp > 0 ? quote.timestamp : Date.now();
+  const sessionDate = new Date(quoteTime).toISOString().slice(0, 10);
+  const seed = hashText(`${quote.ticker}:${sessionDate}:${quote.changePercent.toFixed(1)}:${news.map(article => article.headline).join("|")}`);
+  const pick = (texts: string[], offset = 0) => choose(texts, seed, offset);
+  const flat = Math.abs(quote.changePercent) < 0.1;
+  const up = quote.changePercent > 0;
+  const direction = flat ? "little changed" : up ? "higher" : "lower";
+  const move = Math.abs(quote.changePercent).toFixed(2);
+  const price = formatPrice(quote.price, quote.currency);
+  const previousClose = formatPrice(quote.previousClose, quote.currency);
+  const benchmark = getBenchmark(quote, marketCtx.indices);
+  const relativeMove = benchmark ? quote.changePercent - benchmark.changePercent : null;
+  const alignedMarket = !flat && benchmark && Math.abs(benchmark.changePercent) >= 0.2 && Math.sign(benchmark.changePercent) === Math.sign(quote.changePercent);
+  const domesticSector = !quote.ticker.includes(".") || quote.ticker === "BRK.B";
+  const sector = marketCtx.sectorPerf && Number.isFinite(marketCtx.sectorPerf.changePercent) ? marketCtx.sectorPerf : null;
+  const alignedSector = !flat && domesticSector && sector && Math.abs(sector.changePercent) >= 0.2 && Math.sign(sector.changePercent) === Math.sign(quote.changePercent);
 
-  const currSym = (code: string) => {
-    const map: Record<string, string> = {
-      USD: "$", EUR: "€", GBP: "£", SEK: "kr ",
-      JPY: "¥", HKD: "HK$", CAD: "CA$", AUD: "A$",
-      INR: "₹", CNY: "¥",
-    };
-    return map[code] ?? `${code} `;
-  };
-  const sym = currSym(quote.currency);
-  const priceNow = `${sym}${quote.price.toFixed(2)}`;
-  const previousClose = `${sym}${quote.previousClose.toFixed(2)}`;
+  const seen = new Set<string>();
+  const recentNews = news.filter(article => {
+    const published = Date.parse(article.publishedAt);
+    const title = article.headline.trim().toLowerCase();
+    if (!title || seen.has(title) || !Number.isFinite(published) || published > Math.min(Date.now(), quoteTime) || quoteTime - published > 72 * 60 * 60 * 1000) return false;
+    seen.add(title);
+    return true;
+  }).sort((first, second) => Date.parse(second.publishedAt) - Date.parse(first.publishedAt));
+  const catalysts = recentNews
+    .filter(article => mentionsCompany(article.headline, quote))
+    .map(getCatalyst)
+    .filter((catalyst): catalyst is Catalyst => catalyst !== null);
+  const expectedTone = up ? "positive" : "negative";
+  const lead = catalysts[0];
+  const opposing = !flat && catalysts.find(catalyst => catalyst !== lead && catalyst.tone !== "neutral" && catalyst.tone !== (lead?.tone === "neutral" ? expectedTone : lead?.tone));
+  const leadMatches = !flat && lead?.tone === expectedTone;
 
-  // ── Volume analysis ──
-  const volRatio = quote.avgVolume > 0 ? quote.volume / quote.avgVolume : 1;
-  const volumeLabel =
-    volRatio > 2   ? "unusually heavy" :
-    volRatio > 1.3 ? "above-average" :
-    volRatio < 0.5 ? "very light" :
-    volRatio < 0.7 ? "below-average" : "normal";
-
-  // ── 52-week range context ──
-  const range52 = quote.high52w - quote.low52w;
-  const posIn52w = range52 > 0 ? ((quote.price - quote.low52w) / range52) * 100 : 50;
-  const rangeLabel =
-    posIn52w > 90 ? "near its 52-week high" :
-    posIn52w > 70 ? "in the upper portion of its 52-week range" :
-    posIn52w < 10 ? "near its 52-week low" :
-    posIn52w < 30 ? "in the lower portion of its 52-week range" : null;
-
-  // ── Market cap label ──
-  const mcap = quote.marketCap;
-  const capLabel =
-    mcap > 200e9  ? "mega-cap" :
-    mcap > 10e9   ? "large-cap" :
-    mcap > 2e9    ? "mid-cap" :
-    mcap > 300e6  ? "small-cap" : "micro-cap";
-
-  // ── News sentiment tilt ──
-  const posNews = news.filter((n) => n.sentiment === "positive").length;
-  const negNews = news.filter((n) => n.sentiment === "negative").length;
-  const sentimentTilt =
-    posNews > negNews ? "positive" :
-    negNews > posNews ? "negative" : "mixed";
-
-  const headlineCatalyst =
-    news.length > 0 ? news[0].source :
-    marketCtx.sectorPerf ? `${marketCtx.sectorPerf.sector.toLowerCase()} sector trading` :
-    marketCtx.marketSentiment === "risk-on" ? "risk appetite" :
-    marketCtx.marketSentiment === "risk-off" ? "a weaker market tape" : "mixed trading";
-
-  const headline = choose(
-    up
-      ? [
-          `${quote.name} rises ${absPct}% as ${headlineCatalyst} shapes the move`,
-          `${quote.name} moves higher by ${absPct}% with investors watching ${headlineCatalyst}`,
-          `${quote.name} gains ${absPct}%: news, volume, and market context`,
-          `${quote.name} is up ${absPct}% today. Here's the likely setup`,
-        ]
-      : [
-          `${quote.name} falls ${absPct}% as ${headlineCatalyst} weighs on sentiment`,
-          `${quote.name} trades lower by ${absPct}% with investors watching ${headlineCatalyst}`,
-          `${quote.name} loses ${absPct}%: news, volume, and market context`,
-          `${quote.name} is down ${absPct}% today. Here's the likely setup`,
-        ],
-    seed
-  );
-
-  // ── Key reasons ──
+  let headline: string;
+  let explanation: string;
   const keyReasons: string[] = [];
-
-  // News bullets
-  news.slice(0, 3).forEach((n) => {
-    keyReasons.push(`${n.source}: ${n.headline}`);
-  });
-
-  // Volume insight
-  if (volRatio > 1.3 || volRatio < 0.7) {
-    const volMult = volRatio.toFixed(1);
-    keyReasons.push(
-      `Volume is ${volumeLabel} at ${(quote.volume / 1e6).toFixed(1)}M shares (${volMult}x average)`
-    );
-  }
-
-  // Market context as compact line
-  const topIndices = marketCtx.indices.slice(0, 5);
-  const indexLine = topIndices
-    .map((i) => `${i.name}: ${i.changePercent >= 0 ? "+" : ""}${i.changePercent.toFixed(1)}%`)
-    .join(", ");
-  keyReasons.push(`Broad market: ${indexLine}`);
-
-  // Sector
-  if (marketCtx.sectorPerf) {
-    const sp = marketCtx.sectorPerf;
-    const sUp = sp.changePercent >= 0;
-    keyReasons.push(
-      `${sp.sector} sector ${sUp ? "+" : ""}${sp.changePercent.toFixed(1)}% today`
-    );
-  }
-
-  // ── Summary paragraphs with stable variation ──
-  const paragraphs: string[] = [];
-
-  // Opening sentence — price action with context
-  const magnitudePhrase =
-    pctNum > 5  ? (up ? "is surging" : "is tumbling") :
-    pctNum > 2  ? (up ? "is rallying" : "is selling off") :
-    pctNum > 0.5 ? (up ? "is trading higher" : "is trading lower") :
-                   (up ? "is holding steady with a slight gain" : "is drifting slightly lower");
-
-  const priceSentence = choose(
-    [
-      `${quote.name} (${quote.ticker}) ${magnitudePhrase} at ${priceNow}, ${direction} ${absPct}% from the previous close of ${previousClose}.`,
-      `The stock is at ${priceNow}, a ${absPct}% move ${direction} versus the prior close of ${previousClose}.`,
-      `${quote.ticker} is showing a ${absPct}% ${direction === "up" ? "advance" : "decline"} today, putting the latest price near ${priceNow}.`,
-    ],
-    seed,
-    1
-  );
-
-  let newsSentence: string;
-  if (news.length >= 2) {
-    const topHeadlines = news.slice(0, 2).map((n) => `"${n.headline}"`).join(" and ");
-    newsSentence = choose(
-      [
-        `The news backdrop is active, led by ${topHeadlines}; the headline mix is leaning ${sentimentTilt}.`,
-        `Recent coverage is part of the setup, especially ${topHeadlines}, leaving sentiment around ${quote.ticker} ${sentimentTilt}.`,
-        `Two headlines stand out today: ${topHeadlines}. Taken together, the news tone looks ${sentimentTilt}.`,
-      ],
-      seed,
-      2
-    );
-  } else if (news.length === 1) {
-    newsSentence = choose(
-      [
-        `The main stock-specific headline is "${news[0].headline}" from ${news[0].source}, with a ${news[0].sentiment} read.`,
-        `${news[0].source} is the notable source in today's feed, reporting "${news[0].headline}" with a ${news[0].sentiment} tone.`,
-        `There is one clear company-specific headline in the feed: "${news[0].headline}". Its tone screens as ${news[0].sentiment}.`,
-      ],
-      seed,
-      3
-    );
+  if (flat) {
+    headline = pick([
+      `${quote.name} is little changed: no decisive price move`,
+      `${quote.ticker} holds near its previous close`,
+      `A quiet session for ${quote.name}: price is near the prior close`,
+      `${quote.name}: a small move, not a clear directional signal`,
+    ]);
+    explanation = pick([
+      `The change is below 0.10%, so describing this as a meaningful rally or sell-off would overstate the move.`,
+      `Price is close to the prior close; the available data does not show a strong directional reaction.`,
+      `This is effectively flat trading. A headline may still matter, but the price move alone does not show that investors have reacted decisively.`,
+    ], 1);
+  } else if (lead) {
+    headline = leadMatches ? pick([
+      `${quote.name} ${up ? "gains" : "drops"} ${move}% with ${lead.category} in focus`,
+      `${lead.category[0].toUpperCase()}${lead.category.slice(1)} offers a possible explanation for ${quote.ticker}'s ${move}% move`,
+      `${quote.ticker} trades ${direction} with recent ${lead.category} in the picture`,
+      `${quote.name}: ${lead.category} is a plausible driver of the ${up ? "advance" : "decline"}`,
+    ]) : pick([
+      `${quote.name} moves ${direction} ${move}%, but the news signal is inconclusive`,
+      `${quote.ticker}'s ${move}% move is not fully explained by the latest headlines`,
+      `${quote.name}: price and headline tone do not give a simple answer`,
+      `What explains ${quote.ticker}'s ${move}% move? The evidence is mixed`,
+    ]);
+    const leadAge = quoteTime - Date.parse(lead.article.publishedAt);
+    const evidence = `${lead.article.source} reported "${lead.article.headline}"${leadAge > 24 * 60 * 60 * 1000 ? " within the past three days, rather than this session" : " within the last 24 hours"}.`;
+    const interpretation = leadMatches ? pick([
+      `Its ${lead.tone} wording is consistent with the price direction, making it a plausible contributor, not a confirmed cause.`,
+      `The headline points in the same direction as the stock; it is a candidate explanation rather than proof of what drove the trade.`,
+      `This is the strongest matching event in the available feed, although timing and headline tone alone cannot establish causation.`,
+      `The event could help explain the move, but the feed does not measure how much of the price change it accounts for.`,
+    ], 2) : lead.tone === "neutral" ? pick([
+      `The headline does not establish how this development compares with expectations, so it cannot explain the direction by itself.`,
+      `Its effect is ambiguous: the feed lacks enough detail about expectations to attribute the move to this event.`,
+      `This event is relevant context, but there is no clear directional signal in the available wording.`,
+    ], 2) : pick([
+      `Its ${lead.tone} wording runs against the stock's direction, so it is not a convincing explanation on its own.`,
+      `The headline tone and price action disagree. Other information or the wider market may matter, but this feed cannot identify that with confidence.`,
+      `This coverage is a counter-signal rather than a straightforward reason for the ${up ? "gain" : "decline"}.`,
+    ], 2);
+    explanation = `${evidence} ${lead.mechanism} ${interpretation}`;
+    keyReasons.push(`${lead.category[0].toUpperCase()}${lead.category.slice(1)}: ${lead.article.headline} (${lead.article.source}); ${leadMatches ? "consistent with the move, not confirmed causation" : "directional impact is unclear or conflicting"}.`);
+  } else if (alignedMarket || alignedSector) {
+    const backdrop = alignedSector ? `${sector!.sector} sector` : benchmark!.name;
+    headline = pick([
+      `${quote.name} moves ${direction} with the ${backdrop}`,
+      `${quote.ticker}'s ${move}% move tracks a wider ${up ? "advance" : "pullback"}`,
+      `${quote.name}: the broader backdrop offers a possible explanation`,
+      `A ${up ? "tailwind" : "headwind"} from the ${backdrop} for ${quote.ticker}`,
+    ]);
+    explanation = pick([
+      `No fresh, identifiable company event stands out in the available headlines. The stock is moving in the same direction as the ${backdrop}, making shared market pressure a plausible contributor rather than a verified cause.`,
+      `The available feed does not identify a company-specific catalyst. A move alongside the ${backdrop} points to a possible broader influence, although matching direction alone is not enough to explain the full change.`,
+      `The clearest evidence is the shared direction with the ${backdrop}, not a confirmed company announcement. This supports a market-context explanation, with limited certainty about the actual driver.`,
+    ], 3);
   } else {
-    newsSentence = choose(
-      [
-        `There is no obvious company-specific headline in the latest feed, so broader market flows, sector rotation, or technical trading may be doing more of the work.`,
-        `With little fresh stock-specific news showing up, the move looks more tied to market context and trading dynamics than a single catalyst.`,
-        `The latest feed does not show a major direct catalyst, which makes volume, sector action, and index direction more important here.`,
-      ],
-      seed,
-      4
-    );
+    headline = pick([
+      `${quote.name} moves ${direction} ${move}% without a clear catalyst`,
+      `${quote.ticker}'s ${move}% move: the cause is not clear from this feed`,
+      `${quote.name}: a price move with limited explanatory evidence`,
+      `No clear news explanation for ${quote.ticker}'s ${up ? "gain" : "decline"}`,
+    ]);
+    explanation = pick([
+      `The available headlines do not identify a fresh company event that explains the direction. It would be speculative to label this profit-taking, bargain buying, or a reaction to earnings without additional evidence.`,
+      `There is no clear company-specific catalyst in the recent feed. Price action alone cannot tell us whether positioning, an unreported event, or another factor drove the move.`,
+      `The data confirms the price change, not its cause. No fresh, identifiable event in this feed supports a confident explanation.`,
+      `A move is visible, but a reliable reason is not. The latest coverage is insufficient to attribute it to a specific announcement or investor motive.`,
+    ], 4);
   }
 
-  let volumeSentence: string | null = null;
-  if (volRatio > 1.3) {
-    volumeSentence = choose(
-      [
-        `Volume is ${volumeLabel} at ${(quote.volume / 1e6).toFixed(1)}M shares, about ${volRatio.toFixed(1)}x average, which gives the move more weight.`,
-        `The tape is busier than usual: ${(quote.volume / 1e6).toFixed(1)}M shares have traded, roughly ${volRatio.toFixed(1)}x normal volume.`,
-        `Participation is elevated, with volume running ${volRatio.toFixed(1)}x average, so this is not just a quiet price drift.`,
-      ],
-      seed,
-      5
-    );
-  } else if (volRatio < 0.7) {
-    volumeSentence = choose(
-      [
-        `Volume is ${volumeLabel} at ${(quote.volume / 1e6).toFixed(1)}M shares, so the move may have thinner participation behind it.`,
-        `Trading activity is light compared with normal levels, which makes the price signal a little less forceful.`,
-        `Only ${(quote.volume / 1e6).toFixed(1)}M shares have traded, below the usual pace for ${quote.ticker}.`,
-      ],
-      seed,
-      6
-    );
-  }
-
-  // Market environment
-  const marketMood =
-    marketCtx.marketSentiment === "risk-off" ? "under pressure" :
-    marketCtx.marketSentiment === "risk-on"  ? "in risk-on mode" : "mixed";
-  const marketSentence = choose(
-    [
-      `The broader market is ${marketMood}, with ${indexLine}.`,
-      `Market context matters here: ${indexLine}, leaving the overall tape ${marketMood}.`,
-      `Across major indices, ${indexLine}; that puts the market backdrop in a ${marketMood} state.`,
-    ],
-    seed,
-    7
-  );
-
-  let sectorSentence: string | null = null;
-  if (marketCtx.sectorPerf) {
-    const sp = marketCtx.sectorPerf;
-    const sDir = sp.changePercent >= 0 ? "up" : "down";
-    const sectorRelationship = Math.sign(sp.changePercent) === Math.sign(quote.changePercent) ? "confirming" : "pushing against";
-    sectorSentence = choose(
-      [
-        `The ${sp.sector} sector is ${sDir} ${Math.abs(sp.changePercent).toFixed(1)}%, ${sectorRelationship} the stock's direction.`,
-        `Sector performance is ${sDir} ${Math.abs(sp.changePercent).toFixed(1)}% for ${sp.sector}, which ${sectorRelationship === "confirming" ? "supports" : "contrasts with"} today's move in ${quote.ticker}.`,
-        `${quote.ticker}'s sector backdrop is ${sDir}, with ${sp.sector} changing ${Math.abs(sp.changePercent).toFixed(1)}% today.`,
-      ],
-      seed,
-      8
-    );
-  }
-
-  let rangeSentence: string | null = null;
-  if (rangeLabel) {
-    rangeSentence = choose(
-      [
-        `On the 52-week range, the stock is ${rangeLabel}, between ${sym}${quote.low52w.toFixed(2)} and ${sym}${quote.high52w.toFixed(2)}.`,
-        `Its range position also matters: ${quote.ticker} is ${rangeLabel} after trading between ${sym}${quote.low52w.toFixed(2)} and ${sym}${quote.high52w.toFixed(2)} over the past year.`,
-        `That places the latest price ${rangeLabel} within the stock's one-year range.`,
-      ],
-      seed,
-      9
-    );
-  }
-
-  const contextSentences = [volumeSentence, marketSentence, sectorSentence, rangeSentence].filter(Boolean) as string[];
-  const orderedContext = rotate(contextSentences, seed % Math.max(contextSentences.length, 1));
-
-  if (seed % 3 === 0) {
-    paragraphs.push(`${priceSentence} ${newsSentence}`);
-    paragraphs.push(orderedContext.join(" "));
-  } else if (seed % 3 === 1) {
-    paragraphs.push(`${newsSentence} ${priceSentence}`);
-    paragraphs.push(orderedContext.join(" "));
+  const comparisons: string[] = [];
+  if (benchmark && relativeMove !== null) {
+    const comparison = Math.abs(relativeMove) < 0.3
+      ? `That is close to the benchmark's move, consistent with a shared market influence.`
+      : `The stock is ${relativeMove > 0 ? "outperforming" : "underperforming"} by ${Math.abs(relativeMove).toFixed(2)} percentage points. ${alignedMarket ? "The wider market may explain part of the direction, but not the full size of the move." : "The divergence argues against a simple market-only explanation; it does not identify a company catalyst."}`;
+    const fact = `${benchmark.name} is ${signedPercent(benchmark.changePercent)} versus ${signedPercent(quote.changePercent)} for ${quote.ticker}.`;
+    comparisons.push(pick([`${fact} ${comparison}`, `Against the local benchmark, ${fact} ${comparison}`, `${comparison} For context, ${fact}`], 5));
+    keyReasons.push(`${benchmark.name}: ${signedPercent(benchmark.changePercent)}; stock ${relativeMove >= 0 ? "+" : ""}${relativeMove.toFixed(2)} percentage points relative to the index.`);
   } else {
-    paragraphs.push(`${priceSentence} ${orderedContext.slice(0, 2).join(" ")}`.trim());
-    paragraphs.push([newsSentence, ...orderedContext.slice(2)].join(" "));
+    comparisons.push(`A suitable local benchmark is unavailable in this feed, so a broad-market explanation cannot be assessed reliably.`);
   }
-
-  paragraphs.push(choose([
-    "This is market context, not financial advice.",
-    "Use this as a starting point for research, not as a trading recommendation.",
-    "The setup can change quickly as new filings, headlines, and market data arrive.",
-  ], seed, 10));
-
-  const summary = paragraphs.filter(Boolean).join("\n\n");
-
+  if (sector) {
+    const fact = `${domesticSector ? "The" : "The US"} ${sector.sector} sector proxy is ${signedPercent(sector.changePercent)}.`;
+    const relationship = !domesticSector ? `This is overseas context, not a direct measure of ${quote.ticker}'s local peers.`
+      : flat || Math.abs(sector.changePercent) < 0.2 ? `There is no strong shared directional signal here.`
+      : alignedSector ? `Its direction supports a possible sector-wide influence; it does not confirm a company-specific cause.`
+      : `The stock is moving against this proxy, making sector direction alone an insufficient explanation.`;
+    comparisons.push(`${fact} ${relationship}`);
+    keyReasons.push(`${domesticSector ? "Sector" : "US sector proxy"}: ${sector.sector} ${signedPercent(sector.changePercent)}; ${relationship}`);
+  }
+  if (opposing) {
+    const counter = `The feed also includes "${opposing.article.headline}" (${opposing.article.source}), with a contrasting ${opposing.tone} signal. The news evidence is therefore mixed.`;
+    explanation += ` ${counter}`;
+    keyReasons.push(counter);
+  }
+  const volumeKnown = Number.isFinite(quote.avgVolume) && quote.avgVolume > 0 && Number.isFinite(quote.volume) && quote.volume > 0;
+  let volumeSentence: string;
+  if (volumeKnown) {
+    const ratio = quote.volume / quote.avgVolume;
+    volumeSentence = pick([
+      `Reported volume is ${ratio.toFixed(2)}x the full-day average.`,
+      `Trading volume so far equals ${ratio.toFixed(2)}x an average full day.`,
+      `${quote.ticker}'s reported share turnover is ${ratio.toFixed(2)}x average daily volume.`,
+    ], 6) + (ratio > 1.3
+      ? ` Activity is elevated, but volume does not reveal why investors traded or prove the move will last.`
+      : ` An unfinished session can look light against a full-day average; this is not a time-adjusted activity measure.`);
+    if (ratio > 1.3) keyReasons.push(`Participation: ${ratio.toFixed(2)}x average daily volume; elevated activity, not proof of a cause.`);
+  } else {
+    volumeSentence = `Reliable volume comparisons are unavailable, so participation cannot be used to strengthen this explanation.`;
+  }
+  const priceSentence = pick([
+    `${quote.name} (${quote.ticker}) is ${direction} at ${price}, ${signedPercent(quote.changePercent)} from the previous close of ${previousClose}.`,
+    `At ${price}, ${quote.ticker} has changed ${signedPercent(quote.changePercent)} versus its previous close of ${previousClose}.`,
+    `${quote.ticker} is trading at ${price}, compared with ${previousClose} at the prior close: a ${signedPercent(quote.changePercent)} change.`,
+    `The latest quote puts ${quote.name} at ${price}, ${direction} by ${move}% from ${previousClose}.`,
+  ], 7);
+  const coverage = catalysts.length === 0 && recentNews.length > 0
+    ? ` Recent coverage exists, but it is not a clear, identifiable company event; a price-only or general-market headline is not proof of a catalyst.` : "";
+  const paragraphs = [priceSentence, `${explanation}${coverage}`, comparisons.join(" "), volumeSentence];
+  if (seed % 2 === 0 && !lead) [paragraphs[1], paragraphs[2]] = [paragraphs[2], paragraphs[1]];
   const result: AISummaryResult = {
     headline,
-    summary,
-    keyReasons: keyReasons.slice(0, 6),
+    summary: paragraphs.join("\n\n"),
+    keyReasons: keyReasons.length ? keyReasons.slice(0, 6) : [flat ? "Price is effectively flat; no strong directional reaction." : "No clear cause established by the available news and benchmark data."],
     generatedAt: new Date().toISOString(),
     cached: false,
   };
-
-  cacheSet(cacheKey, result, TTL.AI_SUMMARY);
+  cacheSet(cacheKey, { signature, result }, TTL.AI_SUMMARY);
   return result;
 }
 
-function choose<T>(items: T[], seed: number, offset = 0): T {
-  return items[Math.abs(seed + offset) % items.length];
+function getBenchmark(quote: StockQuote, indices: IndexQuote[]): IndexQuote | undefined {
+  const suffix = quote.ticker.includes(".") ? quote.ticker.split(".").pop()! : "";
+  const symbols: Record<string, string> = { ST: "^OMX", T: "^N225", L: "^FTSE", HK: "^HSI", SS: "000001.SS", NS: "^NSEI", BO: "^NSEI", DE: "^GDAXI" };
+  const usBenchmark = quote.sector === "Technology" || /^(NMS|NGM|NCM|NASDAQ)$/i.test(quote.exchange) ? "^IXIC" : "^GSPC";
+  const symbol = symbols[suffix] ?? ((!suffix || quote.ticker === "BRK.B") ? usBenchmark : undefined);
+  return indices.find(index => index.symbol === symbol && Number.isFinite(index.changePercent));
 }
 
-function rotate<T>(items: T[], count: number): T[] {
-  if (items.length === 0) return items;
-  const offset = count % items.length;
-  return [...items.slice(offset), ...items.slice(0, offset)];
+function mentionsCompany(headline: string, quote: StockQuote): boolean {
+  const aliases: Record<string, string> = { GOOGL: "Google", GOOG: "Google", META: "Facebook" };
+  const companyName = quote.name.replace(/\s+(inc\.?|corp\.?|corporation|company|limited|holdings?|group|plc|class.*)$/i, "").trim();
+  const firstName = companyName.split(/\s+/)[0];
+  const names = [quote.ticker, quote.ticker.split(".")[0], aliases[quote.ticker], companyName, firstName].filter((name): name is string => Boolean(name));
+  return names.some(name => {
+    if (/^(the|advanced|international|global|united|general|first)$/i.test(name)) return false;
+    const flags = name.length <= 3 ? "" : "i";
+    return new RegExp(`(^|[^a-zA-Z0-9])${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-zA-Z0-9]|$)`, flags).test(headline);
+  });
+}
+
+function getCatalyst(article: NewsArticle): Catalyst | null {
+  const text = article.headline;
+  const categories = [
+    { pattern: /\b(earnings|guidance|results|eps|revenue|profits?)\b/i, category: "earnings and outlook", mechanism: "Earnings and guidance can change expectations for future profits and the valuation investors are willing to pay." },
+    { pattern: /\b(upgrade[ds]?|downgrade[ds]?|price target|analyst|rating)\b/i, category: "analyst coverage", mechanism: "Rating and target changes can influence valuation expectations, although they are opinions rather than changes to reported earnings." },
+    { pattern: /\b(acquisition|acquire[ds]?|merger|takeover|buyout)\b/i, category: "deal news", mechanism: "A deal can change expected growth, financing needs, and execution risk; the terms matter more than the announcement alone." },
+    { pattern: /\b(launch(?:es|ed)?|approval|approved|contract|partnership|orders?|product)\b/i, category: "business developments", mechanism: "Products, approvals, and commercial agreements can alter future sales expectations, but their financial scale still needs to be established." },
+    { pattern: /\b(dividend|buyback|repurchase|offering|dilution|stock split)\b/i, category: "capital decisions", mechanism: "Capital decisions can affect share supply, cash returns, or the quoted price; a mechanical adjustment need not reflect a change in business value." },
+    { pattern: /\b(lawsuit|investigation|recall|regulator|regulatory|fine[ds]?)\b/i, category: "legal and regulatory news", mechanism: "Legal or regulatory developments can change expected costs and business risk, depending on their outcome and scope." },
+    { pattern: /\b(inflation|interest rates?|bond yields?|federal reserve|fed rate|rate cuts?|rate hikes?)\b/i, category: "inflation and rates", mechanism: "Inflation and interest-rate news can affect financing costs and the discount rates applied to future profits. Growth-stock valuations can be sensitive to these changes, but the headline alone does not quantify the effect." },
+    { pattern: /\b(tariffs?|export (?:ban|restrictions?|controls?)|sanctions?)\b/i, category: "trade policy", mechanism: "Trade restrictions can change access to customers, supply-chain costs, and expected revenue. Exposure depends on the company's business and the actual policy terms." },
+  ];
+  const event = categories.find(category => category.pattern.test(text));
+  if (!event) return null;
+  const positive = /\b(beat[s]?|topped|raises? (?:guidance|outlook|forecast|price target)|raised (?:guidance|outlook|forecast|price target)|upgrade[ds]?|approved|approval|wins?|secures?|record (?:revenue|profit)|cool(?:er|ing) inflation)\b/i.test(text);
+  const negative = /\b(miss(?:es|ed)?|cuts? (?:guidance|outlook|forecast|price target)|lower(?:s|ed)? (?:guidance|outlook|forecast|price target)|downgrade[ds]?|lawsuit|investigation|recall|dilution|hot(?:ter)? inflation|inflation (?:rises|accelerates))\b/i.test(text);
+  const uncertain = /\b(could|may|might|expected to|set to|preview|ahead of|will|forecast to|no|not|avoids?|without|denies?|dismiss(?:es|ed)?|settles?|settled)\b|\?/i.test(text);
+  const tone = uncertain || positive === negative ? "neutral" : positive ? "positive" : "negative";
+  return { article, category: event.category, mechanism: event.mechanism, tone };
+}
+
+function formatPrice(value: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  } catch {
+    return `${currency} ${value.toFixed(2)}`;
+  }
+}
+
+function signedPercent(value: number): string {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function choose<T>(items: T[], seed: number, offset = 0): T {
+  return items[hashText(`${seed}:${offset}`) % items.length];
 }
 
 function hashText(text: string): number {
   let hash = 0;
-  for (let i = 0; i < text.length; i += 1) {
-    hash = (hash * 31 + text.charCodeAt(i)) | 0;
-  }
-  return hash;
+  for (let index = 0; index < text.length; index += 1) hash = (hash * 31 + text.charCodeAt(index)) | 0;
+  return hash >>> 0;
 }

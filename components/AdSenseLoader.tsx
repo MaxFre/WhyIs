@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 function loadAdSense() {
   if (document.getElementById("adsense-script")) return;
@@ -17,7 +18,11 @@ function loadAdSense() {
 
 /** Drop this in only the pages where you want ads (homepage + stock pages). */
 export default function AdSenseLoader() {
+  const pathname = usePathname();
+  const enabled = pathname === "/" || pathname.startsWith("/stocks/");
+
   useEffect(() => {
+    if (!enabled || process.env.NODE_ENV === "development") return;
     // Already consented — load immediately
     if (localStorage.getItem("cookie-consent") === "accepted") {
       loadAdSense();
@@ -27,7 +32,7 @@ export default function AdSenseLoader() {
     const handler = () => loadAdSense();
     window.addEventListener("cookie-consent-accepted", handler);
     return () => window.removeEventListener("cookie-consent-accepted", handler);
-  }, []);
+  }, [enabled]);
 
   return null;
 }

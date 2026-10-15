@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const ADSENSE_CLIENT =
   process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "ca-pub-3379757990050247";
 
 interface Props {
-  slot: string;
-  /** Separate slot served only on mobile (<640 px). When provided, two independent ad units are rendered. */
+  slot?: string;
   mobileSlot?: string;
   format?: "auto" | "rectangle" | "leaderboard";
   className?: string;
@@ -15,60 +14,67 @@ interface Props {
 
 export default function AdSlot({ slot, mobileSlot, format = "auto", className = "" }: Props) {
   const isDev = process.env.NODE_ENV === "development";
+  const adRef = useRef<HTMLModElement>(null);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const activeSlot = mobileSlot && isMobile === null ? undefined : isMobile && mobileSlot ? mobileSlot : slot;
 
   useEffect(() => {
-    if (isDev) return;
-    const push = () => {
-      try {
-        const w = window as unknown as { adsbygoogle: object[] };
-        (w.adsbygoogle = w.adsbygoogle || []).push({});
-      } catch {}
-    };
-    if (mobileSlot) push(); // mobile unit
-    push();                  // desktop unit
-  }, [isDev, mobileSlot]);
+    if (!mobileSlot) return;
+    const media = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, [mobileSlot]);
 
-  if (isDev) {
-    return (
-      <div className={`ad-manual ${className}`}>
-        {mobileSlot && (
-          <div className="sm:hidden flex items-center justify-center h-[90px] rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 text-xs text-gray-600">
-            Ad (mobile)
-          </div>
-        )}
-        <div
-          className={`${mobileSlot ? "hidden sm:flex" : "flex"} items-center justify-center rounded-2xl border border-dashed border-gray-700 bg-gray-900/40 text-xs text-gray-600`}
-          style={{ minHeight: format === "leaderboard" ? 90 : 250 }}
-        >
-          Advertisement
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (isDev || !activeSlot) return;
+    const push = () => {
+      const ad = adRef.current;
+      if (localStorage.getItem("cookie-consent") !== "accepted" ||
+          !ad || ad.dataset.adRequested || ad.dataset.adsbygoogleStatus || !ad.offsetWidth) return;
+      try {
+        const adsWindow = window as unknown as { adsbygoogle: object[] };
+        (adsWindow.adsbygoogle = adsWindow.adsbygoogle || []).push({});
+        ad.dataset.adRequested = "true";
+      } catch (error) {
+        console.error("Unable to initialize AdSense unit", error);
+      }
+    };
+    push();
+    window.addEventListener("cookie-consent-accepted", push);
+    return () => window.removeEventListener("cookie-consent-accepted", push);
+  }, [isDev, activeSlot]);
+
+  if (!isDev && !activeSlot) return null;
+
+  const height = format === "leaderboard" ? 100 : 250;
 
   return (
-    <div className={`ad-manual ${className}`}>
-      {mobileSlot && (
-        <div className="sm:hidden" style={{ maxHeight: 100, overflow: "hidden" }}>
+    <div className={`ad-manual min-w-0 ${className}`} role="region" aria-label="Advertisement">
+      <p className="mb-2 text-center text-[10px] uppercase tracking-widest text-gray-500">
+        Advertisement
+      </p>
+      <div style={{ minHeight: height }}>
+        {isDev ? (
+          <div
+            className="flex items-center justify-center rounded-lg border border-dashed border-gray-700 bg-gray-900/40 text-xs text-gray-500"
+            style={{ height }}
+          >
+            {format === "leaderboard" ? "Banner ad preview" : "Display ad preview"}
+          </div>
+        ) : (
           <ins
+            key={activeSlot}
+            ref={adRef}
             className="adsbygoogle"
-            style={{ display: "block", height: 100 }}
+            style={{ display: "block", height }}
             data-ad-client={ADSENSE_CLIENT}
-            data-ad-slot={mobileSlot}
-            data-ad-format="horizontal"
-            data-full-width-responsive="false"
+            data-ad-slot={activeSlot}
+            data-ad-format={format === "leaderboard" ? "horizontal" : format}
+            data-full-width-responsive="true"
           />
-        </div>
-      )}
-      <div className={mobileSlot ? "hidden sm:block" : ""}>
-        <ins
-          className="adsbygoogle"
-          style={{ display: "block" }}
-          data-ad-client={ADSENSE_CLIENT}
-          data-ad-slot={slot}
-          data-ad-format={format}
-          data-full-width-responsive="true"
-        />
+        )}
       </div>
     </div>
   );
